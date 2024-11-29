@@ -1,5 +1,7 @@
 flywheel-gear-toolkit
 flywheel-sdk
+numpy
+pandas
 pytz
 pyjq
 globre

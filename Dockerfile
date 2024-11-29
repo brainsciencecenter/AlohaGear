@@ -10,7 +10,7 @@ ENV PYTHONPATH=${FLYWHEEL}/flywheel/lib
 
 RUN apt update
 RUN apt full-upgrade -y
-RUN apt install -y libopenblas-dev bc libxt6 jq csvkit
+RUN apt install -y libopenblas-dev bc libxt6 jq csvkit python-is-python3
 
 COPY requirements.txt ${FLYWHEEL}/
 RUN pip install -r requirements.txt
