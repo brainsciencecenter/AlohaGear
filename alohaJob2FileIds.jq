@@ -37,6 +37,7 @@
 		 , "JobId": $JobId
 		 , "JobCreated": $JobCreated
 		 , "AlohaArgFlag": $AlohaArgFlag
+		 , "AlohaArgFlagName": $AlohaArgFlagName
              }
 	)
       ] as $Outputs

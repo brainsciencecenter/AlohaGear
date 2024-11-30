@@ -162,10 +162,11 @@ then
     #
 
     AlohaArgFlag='"-b"'
-    BaselineT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ')
+    AlohaArgFlagName='"BaselineT1NiftiTrimmed"'
+    BaselineT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ')
     if [ -z "$BaselineT1NiftiTrimmedJson" ] || [ "$BaselineT1NiftiTrimmedJson" = "null" ] || (echo "$opt_f" | grep -q -E 'IgnoreBaselineT1NiftiTrimmedJson|RunBaselineT1Dcm2NiixGear|RunBaselineT1NecktrimGear')
     then
-    	BaselineT1DicomJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
+    	BaselineT1DicomJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
 	if [ -z "$BaselineT1DicomJson" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT1DicomJson')
 	then
 	    echo "${CmdName} : Missing Baseline T1 Dicom for ${BaselineSessionLabel}(${BaselineSessionId}). Skipping" 1>&2
@@ -189,7 +190,7 @@ then
 		BaselineT1DicomFileId=$(echo "$BaselineT1DicomJson" | jq -r '.FileId')
 		echo Faking fwRunGear -w -t "$GearTags" -g dcm2niix -i dcm2niix_input "$BaselineT1DicomFileId" 1>&2
 
-		BaselineT1NiftiFileId=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and ((.FileTags | any(. == "Trimmed")) | not) )' | jq -r '.FileId')
+		BaselineT1NiftiFileId=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and ((.FileTags | any(. == "Trimmed")) | not) )' | jq -r '.FileId')
 	    fi
 
 	    if [ -z "$opt_f" ] ||(echo "$opt_f" | grep -q 'RunBaselineT1NecktrimGear')
@@ -211,16 +212,17 @@ then
 		echo Faking fwRunGear -w -t "$GearTags" -g 'necktrim' -i 'file' "$BaselineT1NiftiFileId" 1>&2
 	    fi
 
-	    BaselineT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ')
+	    BaselineT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-b"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ')
 	fi
     fi
     BaselineT1NiftiTrimmedFileId=$(echo "$BaselineT1NiftiTrimmedJson" | jq -r '.FileId')
 
     AlohaArgFlag='"-c"'
-    BaselineT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -s -r '[sort_by(.FileTimestamp) | .[] | select( .FileType == "nifti" ) ] | last' )
+    AlohaArgFlagName='"BaselineT2Nifti"'
+    BaselineT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -s -r '[sort_by(.FileTimestamp) | .[] | select( .FileType == "nifti" ) ] | last' )
     if [ -z "$BaselineT2NiftiJson" ] || [ "$BaselineT2NiftiJson" = "null" ] || (echo "$opt_f" | grep -q -E 'IgnoreBaselineT2NiftiJson|RunBaselineT2Dcm2NiixGear')
     then
-    	BaselineT2DicomJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
+    	BaselineT2DicomJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
 	if [ -z "$BaselineT2DicomJson" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT2DicomJson')
 	then
 	    echo "${CmdName} : Missing Baseline T2 for ${BaselineSessionLabel}(${BaselineSessionId}). Skipping" 1>&2
@@ -247,7 +249,7 @@ then
 		echo Faking fwRunGear -w -t "$GearTags" -g dcm2niix -i dcm2niix_input "$BaselineT2DicomFileId" 1>&2
 	    fi
 
-	    BaselineT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last')
+	    BaselineT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-c"' --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$BaselineSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last')
 	fi
     fi
     BaselineT2NiftiFileId=$(echo "$BaselineT2NiftiJson" | jq -r '.FileId')
@@ -277,16 +279,18 @@ then
     fi
 
     AlohaArgFlag='"-r"'
-    BaselineT1LeftSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT1JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-r"' -f alohaJob2FileIds.jq | jq --argjson Handedness '"Left"' '.Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) )' )
+    AlohaArgFlagName='"BaselineT1LeftSegmentation"'
+    BaselineT1LeftSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT1JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-r"' --argjson AlohaArgFlagName "$AlohaArgFlagName" -f alohaJob2FileIds.jq | jq --argjson Handedness '"Left"' '[ .Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) ) ] | sort_by(.FileTimestamp) | last ' )
 
-    if [ -z "$BaselineT1LeftSegmentationJson" ] || [ "$BaselineTLeftSegmentationJson" = "null" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT1LeftSegmentationJson')
+    if [ -z "$BaselineT1LeftSegmentationJson" ] || [ "$BaselineT1LeftSegmentationJson" = "null" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT1LeftSegmentationJson')
     then
     	echo "${CmdName} : Missing baseline T1 Left Segmentation" 1>&2
 	BaselineT1LeftSegmentationJson='{ "Missing": true }'
     fi
 
     AlohaArgFlag='"-s"'
-    BaselineT1RightSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT1JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-s"' -f alohaJob2FileIds.jq | jq --argjson Handedness '"Right"' '.Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) )' )
+    AlohaArgFlagName='"BaselineT1RightSegmentation"'
+    BaselineT1RightSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT1JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-s"' --argjson AlohaArgFlagName "$AlohaArgFlagName" -f alohaJob2FileIds.jq | jq --argjson Handedness '"Right"' '[ .Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) ) ] | sort_by(.FileTimestamp) | last' )
     if [ -z "$BaselineT1RightSegmentationJson" ] || [ "$BaselineT1RightSegmentationJson" = "null" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT1RightSegmentationJson')
     then
     	echo "${CmdName} : Missing baseline T1 Right Segmentation" 1>&2
@@ -321,7 +325,8 @@ then
     fi
     
     AlohaArgFlag='"-t"'
-    BaselineT2LeftSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT2JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-t"' -f alohaJob2FileIds.jq | jq --argjson Handedness '"Left"' '.Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) )' )
+    AlohaArgFlagName='"BaselineT2LeftSegmentation"'
+    BaselineT2LeftSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT2JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-t"' --argjson AlohaArgFlagName "$AlohaArgFlagName" -f alohaJob2FileIds.jq | jq --argjson Handedness '"Left"' '[ .Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) ) ] | sort_by(.FileTimestamp) | last' )
     if [ -z "$BaselineT2LeftSegmentationJson" ] || [ "$BaselineT2LeftSegmentationJson" = "null" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT2LeftSegmentationJson')
     then
     	echo "${CmdName} : Missing baseline T2 Left Segmentation" 1>&2
@@ -329,7 +334,8 @@ then
     fi
 
     AlohaArgFlag='"-u"'
-    BaselineT2RightSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT2JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-u"' -f alohaJob2FileIds.jq | jq --argjson Handedness '"Right"' '.Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) )' )    
+    AlohaArgFlagName='"BaselineT2RightSegmentation"'
+    BaselineT2RightSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcT2JobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlag '"-u"' --argjson AlohaArgFlagName "$AlohaArgFlagName" -f alohaJob2FileIds.jq | jq --argjson Handedness '"Right"' '[ .Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) ) ] | sort_by(.FileTimestamp) | last' )    
     if [ -z "$BaselineT2RightSegmentationJson" ] || [ "$BaselineT2RightSegmentationJson" = "null" ] || (echo "$opt_f" | grep -q 'IgnoreBaselineT2RightSegmentationJson')
     then
     	echo "${CmdName} : Missing baseline T2 Right Segmentation" 1>&2
@@ -391,11 +397,12 @@ then
     	FollowupSessionLabel=$(echo "$FollowupJson" | jq -r '.SessionLabel')
         [ -n "$opt_v" ] && echo -n "${CmdName}: FollowupSession = '${FollowupSessionLabel}(${FollowupSessionId})': " 1>&2
     
-	AlohaArgFlag='"-f"'	
-    	FollowupT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-f"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
+	AlohaArgFlag='"-f"'
+	AlohaArgFlagName='"FollowupT1NiftiTrimmed"'
+    	FollowupT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	if [ -z "$FollowupT1NiftiTrimmedJson" ] || [ "$FollowupT1NiftiTrimmedJson" = 'null' ] || (echo "$opt_f" | grep -q -E 'IgnoreFollowupT1NiftiTrimmedJson|RunFollowupT1Dcm2NiixGear|RunFollowupT1NecktrimGear')
 	then
-    	    FollowupT1DicomJson=$(jq -r --argjson AlohaArgFlag '"-f"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
+    	    FollowupT1DicomJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	    if [ -z "$FollowupT1DicomJson" ] || [ "$FollowupT1DicomJson" = 'null' ] || (echo "$opt_f" | grep -q 'IgnoreFollowupT1DicomJson')
 	    then
 		echo " Missing Followup T1. Skipping" 1>&2
@@ -420,7 +427,7 @@ then
 		    [ -n "$FollowupT1DicomTags" ] && sys fwTag -q -t "$FollowupT1DicomTags" "$FollowupT1NiftiFileId"
 		else
 		    echo Faking fwRunGear -w -t "$GearTags" -g dcm2niix -i dcm2niix_input "$FollowupT1DicomFileId" 1>&2
-		    FollowupT1DicomFileId=$(jq -r --argjson AlohaArgFlag '"-f"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and ((.FileTags | any(. == "Trimmed")) | not) )' | jq -r '.FileId')
+		    FollowupT1DicomFileId=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and ((.FileTags | any(. == "Trimmed")) | not) )' | jq -r '.FileId')
 		fi
 	    fi
 	    
@@ -442,14 +449,15 @@ then
 	    fi
 
 	    sys fwget -1 -raGz "$FollowupSessionId" > "$FollowupSessionJsonFile"
-	    FollowupT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag '"-f"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) '| jq -s -r ' sort_by(.FileTimestamp)  | last' )
+	    FollowupT1NiftiTrimmedJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) ) '| jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	fi
 
 	AlohaArgFlag='"-g"'	
-    	FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-g"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) '| jq -s -r ' sort_by(.FileTimestamp)  | last' )
+	AlohaArgFlagName='"FollowupT2Nifti"'
+    	FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) '| jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	if [ -z "$FollowupT2NiftiJson" ] || [ "$FollowupT2NiftiJson" = "null" ] || (echo "$opt_f" | grep -q -E 'IgnoreFollowupT2NiftiJson|RunFollowupT2Dcm2NiixGear')
 	then
-    	    FollowupT2DicomJson=$(jq -r --argjson AlohaArgFlag '"-g"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
+    	    FollowupT2DicomJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	    if [ -z "$FollowupT2DicomJson" ] || [ "$FollowupT2DicomJson" = 'null' ] || (echo "$opt_f" | grep -q 'IgnoreFollowupT2DicomJson')
 	    then
 		echo "Missing Followup T2. Skipping" 1>&2
@@ -481,7 +489,7 @@ then
 		fi
 		
 		sys fwget -1 -raGz "$FollowupSessionId" > "$FollowupSessionJsonFile"
-		FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag '"-g"' --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
+		FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag "$AlohaFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	    fi
 	fi
 
@@ -568,9 +576,12 @@ then
 	for k in $(jq -r '.Baseline | keys[] as $k | select((.[$k]|type) == "object") | $k' "$AlohaInputsJsonFile")
 	do
 		AlohaArgFlag=$(jq -r '.Baseline.'"$k"' | .AlohaArgFlag' "$AlohaInputsJsonFile")
+		AlohaArgFlagName=$(jq -r '.Baseline.'"$k"' | .AlohaArgFlagName' "$AlohaInputsJsonFile")
 		FileName=$(jq -r '.Baseline.'"$k"' | .FileName' "$AlohaInputsJsonFile")
+		FileId=$(jq -r '.Baseline.'"$k"' | .FileId' "$AlohaInputsJsonFile")
 		InputFilePath="${BaselineDir}/${FileName}"
-		AlohaBaselineArgs+=( "$AlohaArgFlag" "$InputFilePath" )
+#		AlohaBaselineArgs+=( "$AlohaArgFlag" "$InputFilePath")
+		AlohaBaselineArgs+=( '-i' "$AlohaArgFlagName" "$FileId" )
 	done
 
 	AlohaFollowupArgs=()
@@ -597,6 +608,7 @@ then
             [ -n "$opt_v" ] && echo "${CmdName} : FollowupSessionLabel = '$FollowupSessionLabel'" 1>&2
     
 	    FollowupSessionT1AlohaArgFlag=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T1.AlohaArgFlag' "$AlohaInputsJsonFile")
+	    FollowupSessionT1AlohaArgFlagName=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T1.AlohaArgFlagName' "$AlohaInputsJsonFile")
 	    if [ -z "$FollowupSessionT1AlohaArgFlag" ] || [ "$FollowupSessionT1AlohaArgFlag" = 'null' ]
 	    then
 		echo "${CmdName} : No FollowupSessionT1AlohaFlag for '${FollowupSessionLabel}(${FollowupSessionId})'" 1>&2
@@ -605,6 +617,7 @@ then
 	    fi
 
 	    FollowupSessionT1FileName=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T1.FileName' "$AlohaInputsJsonFile")
+	    FollowupSessionT1FileId=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T1.FileId' "$AlohaInputsJsonFile")
 	    if [ -z "$FollowupSessionT1FileName" ] || [ "$FollowupSessionT1FileName" = 'null' ]
 	    then
 		echo "${CmdName} : No FollowupSessionT1FileName for '${FollowupSessionLabel}(${FollowupSessionId})'" 1>&2
@@ -613,6 +626,7 @@ then
 	    fi
 
 	    FollowupSessionT2AlohaArgFlag=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T2.AlohaArgFlag' "$AlohaInputsJsonFile")
+	    FollowupSessionT2AlohaArgFlagName=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T2.AlohaArgFlagName' "$AlohaInputsJsonFile")
 	    if [ -z "$FollowupSessionT2AlohaArgFlag" ] || [ "$FollowupSessionT2AlohaArgFlag" = 'null' ]
 	    then
 		echo "${CmdName} : No FollowupSessionT2T2AlohaArgFlag for '${FollowupSessionLabel}(${FollowupSessionId})'" 1>&2
@@ -621,6 +635,7 @@ then
 	    fi
 
 	    FollowupSessionT2FileName=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T2.FileName' "$AlohaInputsJsonFile")
+	    FollowupSessionT2FileId=$(jq -r '.Followups[] | select(.SessionId == "'"$FollowupSessionId"'") | .T2.FileId' "$AlohaInputsJsonFile")
 	    if [ -z "$FollowupSessionT2FileName" ] || [ "$FollowupSessionT2FileName" = 'null' ]
 	    then
 		echo "${CmdName} : No FollowupSessionT2FileName for '${FollowupSessionLabel}(${FollowupSessionId})'" 1>&2
@@ -633,27 +648,44 @@ then
 	    if [ "$RunAloha" = 'true' ]
 	    then
     		FollowupSessionDir="${FollowupDir}/${FollowupSessionLabel}"
+
     		FollowupSessionT1FilePath="${FollowupSessionDir}/${FollowupSessionT1FileName}"
     		FollowupSessionT2FilePath="${FollowupSessionDir}/${FollowupSessionT2FileName}"
 
-		AlohaFollowupArgs+=( "$FollowupSessionT1AlohaArgFlag" "$FollowupSessionT1FilePath" )
-		AlohaFollowupArgs+=( "$FollowupSessionT2AlohaArgFlag" "$FollowupSessionT2FilePath" )
+    		FollowupSessionT1FileId="${FollowupSessionT1FileId}"
+    		FollowupSessionT2FileId="${FollowupSessionT2FileId}"
+
+#		AlohaFollowupArgs+=( "$FollowupSessionT1AlohaArgFlag" "$FollowupSessionT1FilePath" )
+#		AlohaFollowupArgs+=( "$FollowupSessionT2AlohaArgFlag" "$FollowupSessionT2FilePath" )
+
+		AlohaFollowupArgs+=( -i "$FollowupSessionT1AlohaArgFlagName" "$FollowupSessionT1FileId" )
+		AlohaFollowupArgs+=( -i "$FollowupSessionT2AlohaArgFlagName" "$FollowupSessionT2FileId" )
 
 		if [ -n "$opt_f" ] && (echo "$opt_f" | grep -q 'IgnoreAlohaRun')
 		then
 			echo "${CmdName}: Faking aloha_main.sh" 1>&2
 		else
-		    sys aloha_main.sh "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}" -w "$AlohaWorkDir"
+		    AlohaBackendJobId=$(sys fwRunGear -w -t "$GearTags" -g alohabackend "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}")
+#		    sys aloha_main.sh "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}" -w "$AlohaWorkDir"
 		    ExitCode="$?"
 		    if [ "$ExitCode" != 0 ]
 		    then
 			echo "${CmdName} : aloha_main.sh failed '${ExitCode}'" 1>&2
 			continue
 		    fi
+
 		fi
 
-		AlohaLeftVolumeTxtFile="${AlohaWorkDir}/results/volumes_left.txt"
-		AlohaRightVolumeTxtFile="${AlohaWorkDir}/results/volumes_right.txt"
+		AlohaBackendOutputJson=$(fwget -1 -j "$AlohaBackendJobId" | jq -r '.outputs[]')
+		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volume_left.txt").file_id')
+		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volume_left.txt").file_id')
+		
+		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaLeftVolumeTxtFileId"
+		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaRightVolumeTxtFileId"
+
+		AlohaLeftVolumeTxtFile="${AlohaWorkDir}/volumes_left.txt"
+		AlohaRightVolumeTxtFile="${AlohaWorkDir}/volumes_right.txt"
+
 		SubjectLeftVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-LeftVolume.txt"
 		SubjectRightVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-RightVolume.txt"
 
@@ -663,11 +695,8 @@ then
 		(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
 		 cat "$AlohaRightVolumeTxtFile") | sys tee "$SubjectRightVolumeTxtFile"
 		
-		if echo "$opt_o" | grep -qi 'site'
-		then
-		    sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Left' -p "$SubjectId" "$SubjectLeftVolumeTxtFile" 
-		    sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Right' -p "$SubjectId" "$SubjectRightVolumeTxtFile"
-		fi
+		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Left' -p "$SubjectId" "$SubjectLeftVolumeTxtFile" 
+		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Right' -p "$SubjectId" "$SubjectRightVolumeTxtFile"
 
 	    else
 		echo "${CmdName} : Invalid session aloha arguments for '${FollowupSessionLabel}(${FollowupSessionId})'. Skipping" 1>&2

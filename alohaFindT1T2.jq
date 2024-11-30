@@ -1,6 +1,6 @@
 #
 # Finds the T1/T2 acquisition from an session.json file
-# fwget -1  -ra 66e4737ead8f9c0ea1ce2750 | jq -r --argjson AlohaArgFlag '"-b"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq
+# fwget -1  -ra 66e4737ead8f9c0ea1ce2750 | jq -r --argjson AlohaArgFlag '"-b"' --argjson AlohaArgFlagName '"BaselineT1NiftiTrimmed"' --argjson ClassificationMeasurement '"T1"' -f alohaFindT1T2.jq
 # 66e4737ead8f9c0ea1ce2750 is a session id
 #
 
@@ -34,6 +34,7 @@
 	   , "AcquisitionId": $AcquisitionId
 	   , "AcquistionTimestamp": $AcquisitionTimestamp
 	   , "AlohaArgFlag": $AlohaArgFlag
+	   , "AlohaArgFlagName": $AlohaArgFlagName
        }] | sort_by(.FileCreated, .FileType, .FileTags)[]
        #| last
      
