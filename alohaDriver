@@ -677,8 +677,8 @@ then
 		fi
 
 		AlohaBackendOutputJson=$(fwget -1 -j "$AlohaBackendJobId" | jq -r '.outputs[]')
-		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volume_left.txt").file_id')
-		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volume_left.txt").file_id')
+		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_left.txt").file_id')
+		AlohaRightVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_right.txt").file_id')
 		
 		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaLeftVolumeTxtFileId"
 		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaRightVolumeTxtFileId"
@@ -690,10 +690,10 @@ then
 		SubjectRightVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-RightVolume.txt"
 
 		(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
-		 cat "$AlohaLeftVolumeTxtFile") | sys tee "$SubjectLeftVolumeTxtFile"
+		 cat "$AlohaLeftVolumeTxtFile") | tee "$SubjectLeftVolumeTxtFile"
 
 		(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
-		 cat "$AlohaRightVolumeTxtFile") | sys tee "$SubjectRightVolumeTxtFile"
+		 cat "$AlohaRightVolumeTxtFile") | tee "$SubjectRightVolumeTxtFile"
 		
 		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Left' -p "$SubjectId" "$SubjectLeftVolumeTxtFile" 
 		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Right' -p "$SubjectId" "$SubjectRightVolumeTxtFile"
