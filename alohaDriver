@@ -460,7 +460,7 @@ then
     	    FollowupT2DicomJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	    if [ -z "$FollowupT2DicomJson" ] || [ "$FollowupT2DicomJson" = 'null' ] || (echo "$opt_f" | grep -q 'IgnoreFollowupT2DicomJson')
 	    then
-		echo "Missing Followup T2. Skipping" 1>&2
+		echo "Missing Followup T2 for ${FollowupSessionLabel}. Skipping" 1>&2
 		FollowupT2NiftiJson='{ "Missing": true }'
 	    else
 		if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q 'RunFollowupT2Dcm2NiixGear')
@@ -489,7 +489,7 @@ then
 		fi
 		
 		sys fwget -1 -raGz "$FollowupSessionId" > "$FollowupSessionJsonFile"
-		FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag "$AlohaFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
+		FollowupT2NiftiJson=$(jq -r --argjson AlohaArgFlag "$AlohaArgFlag" --argjson AlohaArgFlagName "$AlohaArgFlagName" --argjson ClassificationMeasurement '"T2"' -f alohaFindT1T2.jq  "$FollowupSessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last' )
 	    fi
 	fi
 
@@ -568,7 +568,7 @@ then
 	AlohaBaselineArgs=()
 
 	BaselineSessionScanDateTime=$(jq -r '.Baseline.SessionScanDateTime' "$AlohaInputsJsonFile")
-	BaselineSessionScanDate=$(date -d "$BaselineScanDateTime" "+%Y-%m-%d")
+	BaselineSessionScanDate=$(date -d "$BaselineSessionhbScanDateTime" "+%Y-%m-%d")
 
 	# *** Should verify aspect ratios for T1/T2 are acceptable
 
@@ -661,43 +661,58 @@ then
 		AlohaFollowupArgs+=( -i "$FollowupSessionT1AlohaArgFlagName" "$FollowupSessionT1FileId" )
 		AlohaFollowupArgs+=( -i "$FollowupSessionT2AlohaArgFlagName" "$FollowupSessionT2FileId" )
 
-		if [ -n "$opt_f" ] && (echo "$opt_f" | grep -q 'IgnoreAlohaRun')
+		LastAlohaBackendJobJson=$(jq -r -s '[ .[] | select( (.gear_info.name == "alohabackend") and (.detail.state == "complete")) ] | sort_by(.created) | last | select(.)' "$BaselineJobsJsonFile")
+		if [ -n "$LastAlohaBackendJobJson" ]
 		then
-			echo "${CmdName}: Faking aloha_main.sh" 1>&2
+		    LastAlohaBackendJobId=$(echo "$LastAlohaBackendJobJson" | jq -r '._id')
+		    LastAlohaBackendSessionLabels=$(echo "$LastAlohaBackendJobJson" | jq -r '.inputs[].id' | fwget -1 | jq -r .parents.session | sort -u | fwget -1 | jq -r '.label')
+		    SessionLabelDiff=$(diff <(echo "$LastAlohaBackendSessionLabels" | sort) <( (echo "$BaselineSessionLabel"; echo "$FollowupSessionLabel") | sort))
+		fi
+		
+		if ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q -v 'RunAlohaBackend') ) || ( [ -n "$LastAlohaBackendJobJson" ] && [ -z "$SessionLabelDiff" ] )
+		then
+		    AlohaBackendJobId="$LastAlohaBackendJobId"
 		else
 		    AlohaBackendJobId=$(sys fwRunGear -w -t "$GearTags" -g alohabackend "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}")
-#		    sys aloha_main.sh "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}" -w "$AlohaWorkDir"
 		    ExitCode="$?"
 		    if [ "$ExitCode" != 0 ]
 		    then
 			echo "${CmdName} : aloha_main.sh failed '${ExitCode}'" 1>&2
 			continue
 		    fi
-
 		fi
 
-		AlohaBackendOutputJson=$(fwget -1 -j "$AlohaBackendJobId" | jq -r '.outputs[]')
-		AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_left.txt").file_id')
-		AlohaRightVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_right.txt").file_id')
+		if [ -n "$AlohaBackendJobId" ]
+		then
+		    AlohaBackendOutputJson=$(fwget -1 -j "$AlohaBackendJobId" | jq -r '.outputs[]')
+		    AlohaLeftVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_left.txt").file_id')
+		    AlohaRightVolumeTxtFileId=$(echo "$AlohaBackendOutputJson" | jq -r 'select(.name == "volumes_right.txt").file_id')
 		
-		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaLeftVolumeTxtFileId"
-		fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaRightVolumeTxtFileId"
+		    if [ -n "$AlohaLeftVolumeTxtFileId" ] && [ -n "$AlohaRightVolumeTxtFileId" ]
+		    then
+			fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaLeftVolumeTxtFileId"
+			fwget -1 -f --download --download-dir "${AlohaWorkDir}" "$AlohaRightVolumeTxtFileId"
 
-		AlohaLeftVolumeTxtFile="${AlohaWorkDir}/volumes_left.txt"
-		AlohaRightVolumeTxtFile="${AlohaWorkDir}/volumes_right.txt"
+			AlohaLeftVolumeTxtFile="${AlohaWorkDir}/volumes_left.txt"
+			AlohaRightVolumeTxtFile="${AlohaWorkDir}/volumes_right.txt"
 
-		SubjectLeftVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-LeftVolume.txt"
-		SubjectRightVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-RightVolume.txt"
+			SubjectLeftVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-LeftVolume.txt"
+			SubjectRightVolumeTxtFile="${TmpDir}/${BaselineSessionLabel}-${FollowupSessionLabel}-RightVolume.txt"
 
-		(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
-		 cat "$AlohaLeftVolumeTxtFile") | tee "$SubjectLeftVolumeTxtFile"
+			(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
+			 cat "$AlohaLeftVolumeTxtFile") | tee "$SubjectLeftVolumeTxtFile"
 
-		(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
-		 cat "$AlohaRightVolumeTxtFile") | tee "$SubjectRightVolumeTxtFile"
+			(echo "SessionScanDate,$BaselineSessionScanDate,$FollowupSessionScanDate"
+			 cat "$AlohaRightVolumeTxtFile") | tee "$SubjectRightVolumeTxtFile"
 		
-		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Left' -p "$SubjectId" "$SubjectLeftVolumeTxtFile" 
-		sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Right' -p "$SubjectId" "$SubjectRightVolumeTxtFile"
-
+			sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Left' -p "$SubjectId" "$SubjectLeftVolumeTxtFile" 
+			sys fwuploadfile -v -t 'AlohaOutput,HippocampalVolume,Right' -p "$SubjectId" "$SubjectRightVolumeTxtFile"
+		    else
+			echo "${CmdName} : Missing VolumeTxtFileId.  Skipping" 1>&2
+		    fi
+		else
+		    echo "${CmdName} : No AlohaBackendJobId found.  Skipping" 1>&2
+		fi
 	    else
 		echo "${CmdName} : Invalid session aloha arguments for '${FollowupSessionLabel}(${FollowupSessionId})'. Skipping" 1>&2
 	    fi
