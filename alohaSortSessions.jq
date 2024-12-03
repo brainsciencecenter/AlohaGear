@@ -23,17 +23,20 @@ def fmtDateTime(d; t): (
 );
 
 
-      [.sessions[]
-          |[ .label as $SessionLabel
-          | ._id as $SessionId
-	  | sessionScanDateTime(.) as $SessionScanDateTime
-	  | select((.acquisitions | length) > 0)
-          | .acquisitions[]
-	       | .label as $AcquisitionLabel
-	       | ._id as $AcquisitionId
-	       | .created as $AcquisitionCreated
-	       | .files[]
-               |    select(
+      [
+        .sessions[]
+          |
+            [
+                .label as $SessionLabel
+              | ._id as $SessionId
+              | sessionScanDateTime(.) as $SessionScanDateTime
+              | select((.acquisitions | length) > 0)
+              | .acquisitions[]
+                  | .label as $AcquisitionLabel
+                  | ._id as $AcquisitionId
+                  | .created as $AcquisitionCreated
+                  | .files[]
+                      |    select(
                                 ((.type == "nifti") or (.type == "archive") or (.type == "dicom"))
                             and (.modality == "MR")
 			    and ((.classification | length) > 0)
@@ -44,28 +47,30 @@ def fmtDateTime(d; t): (
                             and ((.tags | length) > 0)
                             and (.tags | any(. == "AlohaInput"))
 			    and (getFileCreatedDateTime(.) != null)
-                   ) 
-                   | .name as $FileName
-		   | .file_id as $FileId
-		   |
-	                { 
-			    "SessionLabel": $SessionLabel
-			  , "SessionId": $SessionId
-			  , "SessionScanDateTime": $SessionScanDateTime
-#			  , "AcquisitionLabel": $AcquisitionLabel
-#			  , "AcquisitionId": $AcquisitionId
-#			  , "AcquisitionCreated": $AcquisitionCreated
-#			  , "FileName": $FileName
-#			  , "FileId": $FileId
-#			  , "FileCreated": .created
-#			  , "FileClassificationMeasurement": .classification.Measurement[]
-			}
-            ] | sort_by(.SessionScanDateTime) | last
+                          ) 
+                       | .name as $FileName
+                       | .file_id as $FileId
+                       |
+	                  { 
+		               "SessionLabel": $SessionLabel
+			     , "SessionId": $SessionId
+			     , "SessionScanDateTime": $SessionScanDateTime
 
+#			     , "AcquisitionLabel": $AcquisitionLabel
+#			     , "AcquisitionId": $AcquisitionId
+#			     , "AcquisitionCreated": $AcquisitionCreated
+#			     , "FileName": $FileName
+#			     , "FileId": $FileId
+#			     , "FileCreated": .created
+#			     , "FileClassificationMeasurement": .classification.Measurement[]
+
+			  }
+             ]
+          | sort_by(.SessionScanDateTime) | last
       ]
-      | [ .[] | select(.)] |  sort_by(.SessionScanDateTime)
-	as $SessionInfo
+      | ( [ .[] | select(.)] |  sort_by(.SessionScanDateTime) )	as $SessionInfo
 	| {
  	      "Baseline": ($SessionInfo | first)
 	    , "Followups": ($SessionInfo | .[1:])
 	  }
+

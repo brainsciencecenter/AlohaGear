@@ -61,6 +61,8 @@ function sys {
     [ -n "$opt_n" ] || "$@"
 }
 
+echo "${CmdName} $@" 1>&2
+
 while getopts Aadf:j:m:no:rtuv arg
 do
 	case "$arg" in
@@ -259,7 +261,7 @@ then
     then
 	if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q 'RunAshsPmcT1Gear')
 	then
-	    BaselineAshsPmcT1JobId=$(fwRunGear -w -t "$GearTags" -g ashs -i T1w "$BaselineT1NiftiTrimmedFileId" -c '{"ASHS_Atlases": "ASHS-PMC-T1"}')
+	    BaselineAshsPmcT1JobId=$(sys fwRunGear -w -t "$GearTags" -g ashs -i T1w "$BaselineT1NiftiTrimmedFileId" -c '{"ASHS_Atlases": "ASHS-PMC-T1"}')
     	    if [ "$?" != 0 ]
     	    then
     		echo "${CmdName} : fwRunGear failed fwRunGear -w -t "$GearTags" -g ashs -i T1w '$BaselineT1NiftiTrimmedFileId' -c '{ASHS_Atlases: ASHS-PMC-T1}'" 1>&2
@@ -305,7 +307,7 @@ then
     then
 	if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q 'RunBaselineAshsPmcT2Gear')
 	then
-	    BaselineAshsPmcT2JobId=$(fwRunGear -w -t "$GearTags" -g ashs -i T1w "$BaselineT1NiftiTrimmedFileId" -i T2w "$BaselineT2NiftiFileId" -c '{"ASHS_Atlases": "ASHS-PMC-T2"}')
+	    BaselineAshsPmcT2JobId=$(sys fwRunGear -w -t "$GearTags" -g ashs -i T1w "$BaselineT1NiftiTrimmedFileId" -i T2w "$BaselineT2NiftiFileId" -c '{"ASHS_Atlases": "ASHS-PMC-T2"}')
     	    if [ "$?" != 0 ]
     	    then
     		echo "${CmdName} : fwRunGear failed fwRunGear -w -t "$GearTags" -g ashs -i T1w '$BaselineT1NiftiTrimmedFileId' -i T2w "$BaselineT2NiftiFileId" -c '{ASHS_Atlases: ASHS-PMC-T2}'" 1>&2
