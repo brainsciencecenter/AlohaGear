@@ -732,6 +732,7 @@ then
     AlohaSubjectAtrophyRatesCsvFile="${TmpDir}/${SubjectLabel}AtrophyRates.csv"
     sys alohaCalculateAtrophyRates "${AtrophyArgs[@]}" "${LeftVolumeFilenames[@]}" "${RightVolumeFilenames[@]}" > "$AlohaSubjectAtrophyRatesCsvFile"
 
+    sys fwuploadfile -v -t 'AlohaOutput,HippocampalAtrophyRates' -p "$SubjectId" "$AlohaSubjectAtrophyRatesCsvFile"
     if [ -n "$opt_t" ]
     then
 	sys alohaCalculateAtrophyRates -t "${AtrophyArgs[@]}" "${LeftVolumeFilenames[@]}" "${RightVolumeFilenames[@]}"
