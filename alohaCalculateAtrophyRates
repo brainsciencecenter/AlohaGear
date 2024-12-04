@@ -86,7 +86,8 @@ ap.add_argument('files', nargs='*', type=str, default=None, help='Files to uploa
 
 args = ap.parse_args()
 
-print("Args.left = {}".format(args.left))
-print("Args.right = {}".format(args.right))
+if (args.verbose):
+    print("Args.left = {}".format(args.left), file=sys.stderr)
+    print("Args.right = {}".format(args.right), file=sys.stderr)
 
 obtain_atrophy_per_subject(args.left, args.right)
