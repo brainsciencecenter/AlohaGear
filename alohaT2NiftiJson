@@ -20,7 +20,13 @@ done
 
 shift $(("$OPTIND" - 1))
 
+if [ -z "$1" ]
+then
+	echo "${CmdName} : Missing SessionJson file." 1>&2
+	exit 1
+fi
 SessionJsonFile="$1"
+
 SessionLabel=$(jq -r '.label' "$SessionJsonFile")
 if [ -z "$SessionLabel" ] || [ "$SessionLabel" = 'null' ]
 then
@@ -42,12 +48,20 @@ then
 fi
 AlohaArgFlagName="$opt_a"
 
-if [ -z "$opt_c" ]
+
+if ( echo "$AlohaArgFlagName" | grep -q "T1" )
 then
-	echo "${CmdName} : missing -c ClassificationMeasurement" 1>&2
-	exit 3
-fi
-ClassificationMeasurement="$opt_c"
+    ClassificationMeasurement=T1
+else
+    ClassificationMeasurement=T2
+fi    
+
+#if [ -z "$opt_c" ]
+#then
+#	echo "${CmdName} : missing -c ClassificationMeasurement" 1>&2
+#	exit 3
+#fi
+#ClassificationMeasurement="$opt_c"
 
 if [ -z "$opt_s" ]
 then
@@ -59,29 +73,55 @@ SessionType="$opt_s"
 GearTags=()
 [ -n "$opt_t" ] && GearTags=( -t "$opt_t" )
     
-
-    FakeDcm2NiixGear="${SessionType}${ClassificationMeasurement}FakeDcm2NiixGear" # fake running dcm2niix
-    IgnoreNiftiJson="${SessionType}${ClassificationMeasurement}IgnoreNiftiJson"   # Missing Dicom, or Run dcm2niix, or fake run dcm2niix, Should run dcm2niix by default
-    IgnoreDicomJson="${SessionType}${ClassificationMeasurement}IgnoreDicomJson"	# Missing Dicom
-    RunDcm2NiixGear="${SessionType}${ClassificationMeasurement}RunDcm2NiixGear"   # Run dcm2niix - should be the same as IgnoreNiftJson, explicitly says which gear to run
+FakeDcm2NiixGear="${SessionType}${ClassificationMeasurement}FakeDcm2NiixGear"			# fake running dcm2niix
+FakeNecktrimGear="${SessionType}${ClassificationMeasurement}FakeNecktrimGear"			# fake running necktrim
+IgnoreNiftiJson="${SessionType}${ClassificationMeasurement}IgnoreNiftiJson"   			# Missing Dicom, or Run dcm2niix, or fake run dcm2niix, Should run dcm2niix by default
+IgnoreNiftiTrimmedJson="${SessionType}${ClassificationMeasurement}IgnoreNiftiTrimmedJson"   	# Missing Dicom, or Run dcm2niix, or fake run dcm2niix, Should run dcm2niix by default
+IgnoreDicomJson="${SessionType}${ClassificationMeasurement}IgnoreDicomJson"			# Missing Dicom
+RunDcm2NiixGear="${SessionType}${ClassificationMeasurement}RunDcm2NiixGear"   			# Run dcm2niix - should be the same as IgnoreNiftJson, explicitly says which gear to run
+RunNecktrimGear="${SessionType}${ClassificationMeasurement}RunNecktrimGear"   			# Run necktrim - should be the same as IgnoreNiftJson, explicitly says which gear to run
 
 #    opt_f=BaselineT2FakeDcm2NiixGear
 #    opt_f=BaselineT2IgnoreDicomJson
 #    opt_f=BaselineT2RunDcm2NiixGear
 #    opt_f=BaselineIgnoreT2NiftiJson
  
-    NiftiJson=$(jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile" | jq -s -r '[sort_by(.FileTimestamp) | .[] | select( .FileType == "nifti" ) ] | last' )
-    if [ -z "$NiftiJson" ] || [ "$NiftiJson" = 'null' ] || (echo "$opt_f" | grep -q -E "${IgnoreNiftiJson}|${IgnoreBaselineT2DicomJson}|${FakeDcm2NiixGear}|${RunDcm2NiixGear}")
+#    NiftiJson=$(jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile" | jq -s -r '[sort_by(.FileTimestamp) | .[] | select( .FileType == "nifti" ) ] | last' )
+
+function findT1T2FileJson {
+    local AlohaArgFlagName="$1"
+    local ClassificationMeasurement="$2"
+    local SessionJsonFile="$3"
+    
+    jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile"
+}
+
+    # *** will want the last one of these for T2 -- how to handle for T1-Trimmed?
+    FileJson=$(findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" )
+    if [ -z "$FileJson" ] || [ "$FileJson" = 'null' ]
     then
-    	DicomJson=$(jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
-	if [ -z "$DicomJson" ] || [ "$DicomJson" = 'null' ] || (echo "$opt_f" | grep -q "$IgnoreDicomJson")
+	echo "${CmdName} : Can not find any ${ClassificationMeasurement} files in ${SessionJsonFile}" 1>&2
+	exit 1
+    fi
+    
+    if [ "$ClassificationMeasurement" = 'T1' ]
+    then
+        SoughtForNiftiJson=$( echo "$FileJson" | jq -s -r '[ .[] | select( ((.FileTags | any(. == "Trimmed"))) ) ] | last' )
+    else
+        SoughtForNiftiJson=$(echo "$FileJson" | jq -s -r '[ .[] | select(.FileType == "nifti") ]| last')
+    fi
+
+    if [ -z "$SoughtForJson" ] || [ "$SoughtForNiftiJson" = 'null' ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q -E "${IgnoreNiftiJson}|${IgnoreDicomJson}|${FakeDcm2NiixGear}|${RunDcm2NiixGear}|${IgnoreNiftiTrimmedJson}|${FakeNecktrimGear}|${RunNecktrimGear}"))
+    then
+    	DicomJson=$(findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
+	if [ -z "$DicomJson" ] || [ "$DicomJson" = 'null' ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q "$IgnoreDicomJson") )
 	then
 	    # There is no dicom to convert to nifti, so we're done
 	    echo "${CmdName} : Missing \"${AlohaArgFlagName}\" for ${SessionLabel}(${SessionId}). Skipping" 1>&2
-	    NiftiJson='{ "Missing": true }'
+	    SoughtForNiftiJson='{ "Missing": true }'
 	else
 	    # There is a dicom to convert or fake converting
-	    if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q "$RunDcm2NiixGear") || (echo "$opt_f" | grep -q -v "$FakeDcm2NiixGear")
+	    if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q "$RunDcm2NiixGear") || ( echo "$opt_f" | grep -q -v "$FakeDcm2NiixGear")
 	    then
 		DicomFileId=$(echo "$DicomJson" | jq -r '.FileId')
 		Dicom2NiftiJobId=$(sys fwRunGear -w "${GearTags[@]}" -g dcm2niix -i dcm2niix_input "$DicomFileId")
@@ -102,9 +142,31 @@ GearTags=()
 		echo "${CmdName} : Faking fwRunGear -w ${GearTags[@]} -g dcm2niix -i dcm2niix_input \"${DicomFileId}\"" 1>&2
 	    fi
 
-	    NiftiJson=$(jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile" | jq -r 'select( .FileType == "nifti" ) ' | jq -s -r ' sort_by(.FileTimestamp)  | last')
+	    if [ "$ClassificationMeasurement" = 'T1' ]
+	    then
+		if [ -z "$opt_f" ] || ( echo "$opt_f" | grep -q "$RunNecktrimGear") || ( echo "$opt_f" | grep -q -v "$FakeNecktrimGear")
+		then
+		    NecktrimJobId=$(sys fwRunGear -w -t "$GearTags" -g 'necktrim' -i 'file' "$NiftiFileId")
+                    if [ "$?" != 0 ]
+                    then
+                         echo "${CmdName} : fwRunGear failed fwRunGear -w -t '$GearTags' -g 'necktrim' -i 'file' '$NiftiFileId'" 1>&2
+			 exit 1
+                    fi
+
+                    T1NiftiTrimmedFileId=$(fwget -1 -j "$NecktrimJobId" | jq -r '.outputs[] | select(.type == "nifti") | .file_id')
+
+                    T1NiftiTags=$(fwTag "$T1NiftiTrimmedFileId")
+                    [ -n "$T1NiftiTags" ] && sys fwTag -q -t "$T1NiftiTags" "$T1NiftiTrimmedFileId"
+		
+                    sys fwget -1 -raGz "$SessionId" > "$SessionJsonFile"
+                else
+                    echo Faking fwRunGear -w -t "$GearTags" -g 'necktrim' -i 'file' "$T1NiftiFileId" 1>&2
+	        fi
+	    	SoughtForNiftiJson=$( findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" | jq -r 'select( (.FileType == "nifti") and (.FileTags | any(. == "Trimmed")) )' )
+	    else
+	    	SoughtForNiftiJson=$( findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" | jq -r 'select( .FileType == "nifti" )' )
+	    fi
 	fi
     fi
 
-    echo "$NiftiJson"
-
+    echo "$SoughtForNiftiJson"
