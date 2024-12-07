@@ -93,7 +93,7 @@ function findT1T2FileJson {
     local ClassificationMeasurement="$2"
     local SessionJsonFile="$3"
     
-    jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -f alohaFindT1T2.jq  "$SessionJsonFile"
+    jq -r --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" --argjson ClassificationMeasurement "\"$ClassificationMeasurement\"" -L . -f alohaFindT1T2.jq  "$SessionJsonFile"
 }
 
     # *** will want the last one of these for T2 -- how to handle for T1-Trimmed?
@@ -101,7 +101,9 @@ function findT1T2FileJson {
     if [ -z "$FileJson" ] || [ "$FileJson" = 'null' ]
     then
 	echo "${CmdName} : Can not find any ${ClassificationMeasurement} files in ${SessionJsonFile}" 1>&2
-	exit 1
+	SoughtForNiftiJson='{ "Missing": true }'
+	echo "$SoughtForNiftiJson"
+	exit 0
     fi
     
     if [ "$ClassificationMeasurement" = 'T1' ]
@@ -111,7 +113,7 @@ function findT1T2FileJson {
         SoughtForNiftiJson=$(echo "$FileJson" | jq -s -r '[ .[] | select(.FileType == "nifti") ]| last')
     fi
 
-    if [ -z "$SoughtForJson" ] || [ "$SoughtForNiftiJson" = 'null' ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q -E "${IgnoreNiftiJson}|${IgnoreDicomJson}|${FakeDcm2NiixGear}|${RunDcm2NiixGear}|${IgnoreNiftiTrimmedJson}|${FakeNecktrimGear}|${RunNecktrimGear}"))
+    if [ -z "$SoughtForNiftiJson" ] || [ "$SoughtForNiftiJson" = 'null' ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q -E "${IgnoreNiftiJson}|${IgnoreDicomJson}|${FakeDcm2NiixGear}|${RunDcm2NiixGear}|${IgnoreNiftiTrimmedJson}|${FakeNecktrimGear}|${RunNecktrimGear}"))
     then
     	DicomJson=$(findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" | jq -r 'select( (.FileType == "archive") or (.FileType == "dicom") ) ')
 	if [ -z "$DicomJson" ] || [ "$DicomJson" = 'null' ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q "$IgnoreDicomJson") )

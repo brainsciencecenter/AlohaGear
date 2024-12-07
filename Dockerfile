@@ -29,6 +29,7 @@ COPY	alohaFindSegmentFiles.jq		\
 	alohaFindT1T2.jq			\
 	alohaFlattenDict.jq			\
 	alohaJob2FileIds.jq			\
+	alohaLib.jq				\
 	alohaSessionReport.jq			\
 	alohaSortSessions.jq			\
 						\
