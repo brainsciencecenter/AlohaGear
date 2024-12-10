@@ -17,11 +17,9 @@ RUN pip install -r requirements.txt
 
 COPY run config.test.json ${FLYWHEEL}/ 
 COPY 	alohaCalculateAtrophyRates		\
-	alohaDownloadInputFiles			\
 	alohaDriver				\
-	alohaGenJson				\
-	alohaUploadAndTagOutputs		\
-	alohaVerifyInputs			\
+	alohaFindSegmentationJson		\
+	alohaT2NiftiJson			\
 						\
 	/usr/local/bin/
 

@@ -1,17 +1,17 @@
 {
   "destination": {
-    "id": "674517ed54af7fb582b47b21",
+    "id": "67583bf5c24ba3ef21c9bef3",
     "type": "analysis"
   },
   "inputs": {
     "input-file": {
       "hierarchy": {
-        "id": "674274f18c6dfc43b3cbbb22",
+        "id": "6757aaa200eee05da1c9be21",
         "type": "acquisition"
       },
       "object": {
-        "type": "nifti",
-        "mimetype": "application/octet-stream",
+        "type": "archive",
+        "mimetype": "application/zip",
         "modality": "MR",
         "classification": {
           "Intent": [
@@ -21,39 +21,191 @@
             "T1"
           ]
         },
-        "tags": [
-          "Trimmed",
-          "AlohaInput"
-        ],
-        "info": {},
-        "size": 22899488,
+        "tags": [],
+        "info": {
+          "AcquisitionDate": "20230210",
+          "AcquisitionMatrix": [
+            0,
+            32,
+            32,
+            0
+          ],
+          "AcquisitionNumber": 1,
+          "AcquisitionTime": "084231.630000",
+          "AngioFlag": "N",
+          "BitsAllocated": 16,
+          "BitsStored": 12,
+          "BodyPartExamined": "BRAIN",
+          "CSAHeader": {
+            "EchoLinePosition": 16,
+            "EchoColumnPosition": 16,
+            "EchoPartitionPosition": 16,
+            "UsedChannelString": "XX",
+            "Actual3DImaPartNumber": 29,
+            "ICE_Dims": "X_1_1_1_1_1_30_1_1_1_1_1_171",
+            "ProtocolSliceNumber": 0,
+            "RealDwellTime": 3000,
+            "SliceMeasurementDuration": 260,
+            "SequenceMask": 0,
+            "AcquisitionMatrixText": "32*32s",
+            "MeasuredFourierLines": 0,
+            "PhaseEncodingDirectionPositive": 1,
+            "ImaAbsTablePosition": [
+              0,
+              0,
+              -1277
+            ],
+            "NonPlanarImage": 0,
+            "SlicePosition_PCS": [
+              132.82971537,
+              -103.25220793,
+              175.21249709
+            ],
+            "MultistepIndex": 0,
+            "ImaRelTablePosition": [
+              0,
+              0,
+              0
+            ],
+            "ImaCoilString": "BC",
+            "RFSWDDataType": "measured",
+            "GSWDDataType": "measured",
+            "ImageHistory": [
+              "CC:SoS"
+            ]
+          },
+          "Columns": 32,
+          "ContentDate": "20230210",
+          "ContentTime": "084232.269000",
+          "DeidentificationMethod": "Penn_BSC_profile_v3.0",
+          "DeviceSerialNumber": "67040",
+          "EchoNumbers": 1,
+          "EchoTime": 5,
+          "EchoTrainLength": 32,
+          "FlipAngle": 2,
+          "FrameOfReferenceUID": "1.3.12.2.1107.5.2.43.67040.1.20230210084037904.0.0.0",
+          "HighBit": 11,
+          "ImageOrientationPatient": [
+            -0.0546647405767,
+            0.98371928736018,
+            -0.1711961734773,
+            -0.0587344997441,
+            -0.1743235584502,
+            -0.9829351736046
+          ],
+          "ImagePositionPatient": [
+            132.82971537435,
+            -103.25220792686,
+            175.21249709406
+          ],
+          "ImageType": [
+            "ORIGINAL",
+            "PRIMARY",
+            "M",
+            "ND"
+          ],
+          "ImagedNucleus": "1H",
+          "ImagingFrequency": 123.262604,
+          "InPlanePhaseEncodingDirection": "ROW",
+          "InstanceCreationDate": "20230210",
+          "InstanceCreationTime": "084232.269000",
+          "InstanceNumber": 30,
+          "InstitutionAddress": "Charles Young Dr. South 660,Los Angeles/AEB6B38863597E/,Los Angeles Service,US,90095",
+          "InstitutionName": "UCLA Brain Mapping Center",
+          "InstitutionalDepartmentName": "Department",
+          "LargestImagePixelValue": 146,
+          "MRAcquisitionType": "3D",
+          "MagneticFieldStrength": 3,
+          "Manufacturer": "SIEMENS",
+          "ManufacturerModelName": "Prisma_fit",
+          "Modality": "MR",
+          "NumberOfAverages": 1,
+          "NumberOfPhaseEncodingSteps": 32,
+          "PatientAge": "046Y",
+          "PatientPosition": "HFS",
+          "PatientSex": "M",
+          "PatientWeight": 120.82568292859,
+          "PercentPhaseFieldOfView": 100,
+          "PercentSampling": 100,
+          "PerformedProcedureStepDescription": "KNARRGROUP^DECODE",
+          "PerformedProcedureStepID": "MR20230210084037",
+          "PerformedProcedureStepStartDate": "20230210",
+          "PerformedProcedureStepStartTime": "084037.699000",
+          "PhotometricInterpretation": "MONOCHROME2",
+          "PixelBandwidth": 5210,
+          "PixelRepresentation": 0,
+          "PixelSpacing": [
+            8,
+            8
+          ],
+          "ProtocolName": "anat_acq_vnavsetter_T1w",
+          "RepetitionTime": 11,
+          "Rows": 32,
+          "SAR": 0.0010655583704,
+          "SOPClassUID": "1.2.840.10008.5.1.4.1.1.4",
+          "SOPInstanceUID": "1.3.12.2.1107.5.2.43.67040.2023021008423195200207058",
+          "SamplesPerPixel": 1,
+          "ScanningSequence": "EP",
+          "SequenceName": "ABCD3d1_32ns",
+          "SequenceVariant": [
+            "SK",
+            "SP"
+          ],
+          "SeriesDate": "20230210",
+          "SeriesDescription": "anat_acq_vnavsetter_T1w",
+          "SeriesInstanceUID": "1.3.12.2.1107.5.2.43.67040.2023021008423136332406963.0.0.0",
+          "SeriesNumber": 6,
+          "SeriesTime": "084232.188000",
+          "SliceLocation": 116.09858950356,
+          "SliceThickness": 8,
+          "SmallestImagePixelValue": 0,
+          "SoftwareVersions": "syngo MR E11",
+          "SpecificCharacterSet": "ISO_IR 100",
+          "StationName": "MRC35343",
+          "StudyDate": "20230210",
+          "StudyDescription": "KNARRGROUP^DECODE",
+          "StudyID": "1",
+          "StudyInstanceUID": "1.3.12.2.1107.5.2.43.67040.30000023020917032648000000010",
+          "StudyTime": "084037.476000",
+          "TransmitCoilName": "Body",
+          "VariableFlipAngleFlag": "N",
+          "WindowCenter": 118,
+          "WindowCenterWidthExplanation": "Algo1",
+          "WindowWidth": 282,
+          "dBdt": 0
+        },
+        "size": 673700,
         "zip_member_count": null,
         "version": 1,
-        "file_id": "674292d4e3baa8833ecb8551",
+        "file_id": "6757ad1a00eee05da1c9be36",
         "origin": {
-          "type": "job",
-          "id": "6742911ddef99352a8df6fb1"
+          "type": "user",
+          "id": "holder@upenn.edu"
         }
       },
       "location": {
-        "path": "/flywheel/v0/input/input-file/7_anat_T1w_anat-T1w_20231116134951_7-trimmed.nii.gz",
-        "name": "7_anat_T1w_anat-T1w_20231116134951_7-trimmed.nii.gz"
+        "path": "/flywheel/v0/input/input-file/anat_acq_vnavsetter_T1w.zip",
+        "name": "anat_acq_vnavsetter_T1w.zip"
       },
       "base": "file"
     },
     "api-key": {
       "base": "api-key",
-      "key": "upenn.flywheel.io:djEHk--bPSQ_RVFPCQ5ptYa9A4gNcq2Jo0j7Ceq5ipgq3WWti08vrgeuA"
+      "key": "upenn.flywheel.io:djELUDfJ-JUIqVea7VmjZ_xNGTqHfR-p0uzAkw1FT5wjWpICWj0pYv7zA"
     }
   },
-  "config": {},
+  "config": {
+    "MachineSize": "supersize",
+    "Scope": "Subject",
+    "Stages": "VerifyAlohaInputs"
+  },
   "job": {
-    "id": "674517ee54af7fb582b47b23",
+    "id": "67583bf5c24ba3ef21c9bef5",
     "gear_info": {
-      "id": "674517547d0548ff18c0eead",
+      "id": "67583b1d5c2f07704e2d1ed0",
       "category": "analysis",
       "name": "aloha",
-      "version": "0.1.4",
+      "version": "0.1.19",
       "capabilities": null
     }
   }
