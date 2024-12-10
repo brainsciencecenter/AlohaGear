@@ -1,0 +1,181 @@
+#!/bin/bash
+
+CmdName=$(basename "$0")
+
+Syntax="${CmdName} {-1 BaselineT1NiftiTrimmedFileId} {-2 BaselineT2NiftiFileId} {-c ClassificationMeasurement}  [-f FakeStrings][-t GearTags][-n][-v] {BaselineSessionJsonFile}"
+
+function sys {
+    [ -n "${opt_n}${opt_v}" ] && echo "$@" 1>&2
+    [ -n "$opt_n" ] || "$@"
+}
+
+function updateJobsJsonFile {
+    local BaselineSessionLabel="$1"
+    local BaselineSessionId="$2"
+    local BaselineJobsJsonFile="$3"
+    
+    local BaselineJobsJsonTmpFile="${BaselineJobsJsonFile}.tmp"
+    
+    sys fwfind -1 -j -r session="$BaselineSessionId" > "$BaselineJobsJsonTmpFile"
+    if [ "$?" != 0 ]
+    then
+    	echo "${CmdName} : failed getting finding jobs for '$SessionLabel' ($SessionId)" 1>&2
+    	return 1
+    fi
+
+    [ -s "$BaselineJobsJsonTmpFile" ] && mv "$BaselineJobsJsonTmpFile" "$BaselineJobsJsonFile"
+}
+
+function getSegmentationJson {
+    local ClassificationMeasurement="$1"
+    local HandedNess="$2"
+
+    local AlohaArgFlagName="Baseline${ClassificationMeasurement}${HandedNess}Segmentation"
+    local IgnoreBaselineSegementationJson="IgnoreBaseline${ClassificationMeasurement}${HandedNess}SegmentationJson"
+
+    BaselineSegmentationJson=$( jq -r --argjson JobId "\"$BaselineAshsPmcJobId\"" 'select(._id == $JobId)' "$BaselineJobsJsonFile" | jq --argjson AlohaArgFlagName "\"$AlohaArgFlagName\"" -L . -f alohaJob2FileIds.jq | jq --argjson Handedness "\"$HandedNess\"" '[ .Outputs[] | select(.FileModality == "SEG" and (.FileName | test("lfseg_heur")) and (.FileTags | any(. == $Handedness)) ) ] | sort_by(.FileTimestamp) | last ' )
+
+    if [ -z "$BaselineSegmentationJson" ] || [ "$BaselineSegmentationJson" = "null" ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q "$IgnoreBaselineSegementationJson"))
+    then
+    	echo "${CmdName} : Missing baseline ${ClassificationMeasurement} ${HandedNess} Segmentation" 1>&2
+	BaselineSegmentationJson='{ "Missing": true }'
+    fi
+
+    echo "$BaselineSegmentationJson"
+}
+
+while getopts 1:2:c:f:nt:v arg
+do
+	case "$arg" in
+	     1|2|c|f|n|t|v)
+		eval "opt_${arg}='${OPTARG:=1}'"
+		;;
+	esac
+done
+
+shift $(("$OPTIND" - 1))
+
+if [ -z "$1" ]
+then
+	echo "${CmdName} : Missing SessionJson file." 1>&2
+	exit 1
+fi
+BaselineSessionJsonFile="$1"
+
+BaselineSessionLabel=$(jq -r '.label' "$BaselineSessionJsonFile")
+if [ -z "Baseline$SessionLabel" ] || [ "$BaselineSessionLabel" = 'null' ]
+then
+	echo "${CmdName} : can not find BaselineSession label in '$BaselineSessionJsonFile'" 1>&2
+	exit 1
+fi
+
+BaselineSessionId=$(jq -r '._id' "$BaselineSessionJsonFile")
+if [ -z "$BaselineSessionId" ] || [ "$BaselineSessionId" = 'null' ]
+then
+	echo "${CmdName} : can not find BaselineSession Id in '$BaselineSessionJsonFile'" 1>&2
+	exit 2
+fi
+
+if [ -z "$opt_1" ]
+then
+	echo "${CmdName} : missing -1 BaselineT1NiftiTrimmedFileId" 1>&2
+	echo "$Syntax"
+	exit 3
+fi
+    
+if [ -z "$opt_2" ]
+then
+	echo "${CmdName} : missing -2 BaselineT2NiftiFileId" 1>&2
+	echo "$Syntax"
+	exit 3
+fi
+
+if [ -z "$opt_c" ]
+then
+	echo "${CmdName} : missing -c T1|T2" 1>&2
+	echo "$Syntax"
+	exit 3
+fi
+
+BaselineT1NiftiTrimmedFileId="$opt_1"
+BaselineT2NiftiFileId="$opt_2"
+ClassificationMeasurement="$opt_c"
+
+if [ "$ClassificationMeasurement" = 'T1' ]
+then
+    SoughtForAtlas='ASHS-PMC-T1'
+elif [ "$ClassificationMeasurement" = 'T2' ]
+then
+    SoughtForAtlas='ASHS-PMC-T2'
+else
+	echo "${CmdName} : unknown ClassificationMeasurement '$opt_c'" 1>&2
+	echo "$Syntax"
+	exit 3
+fi
+
+TmpDir='/tmp/Aloha'
+
+GearTags=()
+[ -n "$opt_t" ] && GearTags=( -t "$opt_t" )
+
+    BaselineJobsJsonFile="${TmpDir}/BaselineJobs.json"
+    if [ ! -e "$BaselineJobsJsonFile" ] || [ ! -s "$BaselineJobsJsonFile" ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q 'IgnoreBaselineJobsJsonFile'))
+    then
+	# Need -r to get the output file id
+	sys updateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
+	if [ "$?" != 0 ]
+        then
+	    echo "${CmdName} : updating JobsJsonFile failed.  Bailing" 1>&2
+	    exit 1
+        fi
+    fi
+
+    IgnoreBaselineAshsPmcJobId="IgnoreBaselineAshsPmc${ClassificationMeasurement}JobId"
+    RunBaselineAshsPmcGear="RunBaselineAshsPmc${ClassificationMeasurement}Gear"
+    FakeBaselineAshsPmcGear="FakeBaselineAshsPmc${ClassificationMeasurement}Gear"
+
+    BaselineAshsPmcJobId=$( jq  -s -r '[ .[] | select( (.gear_info.name == "ashs") and (.detail.state == "complete") and (.config.config.ASHS_Atlases == '"\"$SoughtForAtlas\""') ) ] | sort_by(.created) | last | ._id' "$BaselineJobsJsonFile")
+
+    if [ -z "$BaselineAshsPmcJobId" ] || [ "$BaselineAshsPmcJobId" = "null" ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q -E "${IgnoreBaselineAshsPmcJobId}|${RunBaselineAshsPmcGear}|$FakeBaselineAshsPmcGear"))
+    then
+	fwRunGearArgs=( -w "${GearTags[@]}" -g ashs -c "{\"ASHS_Atlases\": \"${SoughtForAtlas}\"}" -i T1w "$BaselineT1NiftiTrimmedFileId" )
+	if [ "$ClassificationMeasurement" = 'T2' ]
+	then
+	    fwRunGearArgs+=( -i T2w "$BaselineT2NiftiFileId" )
+	fi
+	    
+	if [ -z "$opt_f" ] || (echo "$opt_f" | grep -q "$RunBaselineAshsPmcGear") || (echo "$opt_f" | grep -q -v "$FakeBaselineAshsPmcGear")
+	then
+	    BaselineAshsPmcJobId=$(sys fwRunGear "${fwRunGearArgs[@]}" )
+    	    if [ "$?" != 0 ]
+    	    then
+    		echo "${CmdName} : fwRunGear failed fwRunGear ${fwRunGearArgs[@]}" 1>&2
+    		exit 1
+    	    fi
+
+	    sys updateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
+    	    if [ "$?" != 0 ]
+    	    then
+    		echo "${CmdName} : fwfind failed updating jobs for '$BaselineSessionLabel' ($BaselineSessionId)" 1>&2
+    		exit 1
+    	    fi
+	    [ -s "$BaselineJobsJsonTmpFile" ] && mv "$BaselineJobsJsonTmpFile" "$BaselineJobsJsonFile"
+	else
+	    echo "${CmdName} : Faking fwRunGear ${fwRunGearArgs[@]}'" 1>&2
+	fi
+    fi
+
+    for HandedNess in 'Left' 'Right'
+    do
+	BaselineLeftSegmentationJson=$(getSegmentationJson "$ClassificationMeasurement" "$HandedNess")
+	if [ -z "$BaselineLeftSegmentationJson" ]
+	then
+	    echo "${CmdName} : Something went wrong retrieving ${ClassificationMeasurement} ${HandedNess} Segmentation Json" 1>&2
+	    exit 5
+	fi
+
+	echo "{ \"${ClassificationMeasurement}${HandedNess}Segmentation\": ${BaselineLeftSegmentationJson} }"
+    done | jq -s 'add'
+
+
+

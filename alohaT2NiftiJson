@@ -2,17 +2,17 @@
 
 CmdName=$(basename "$0")
 
-Syntax="${CmdName} {-a AlohaArgFlagName} {-c ClassificationMeasurement} {-s Baseline|Followup} [-f FakeStrings][-t GearTags][-n][-v]"
+Syntax="${CmdName} {-a AlohaArgFlagName} {-c ClassificationMeasurement} [-f FakeStrings][-t GearTags][-n][-v] {SessionJsonFile}"
 
 function sys {
     [ -n "${opt_n}${opt_v}" ] && echo "$@" 1>&2
     [ -n "$opt_n" ] || "$@"
 }
 
-while getopts a:c:f:ns:t:v arg
+while getopts a:c:f:nt:v arg
 do
 	case "$arg" in
-	     a|c|f|n|s|t|v)
+	     a|c|f|n|t|v)
 		eval "opt_${arg}='${OPTARG:=1}'"
 		;;
 	esac
@@ -49,26 +49,23 @@ fi
 AlohaArgFlagName="$opt_a"
 
 
-if ( echo "$AlohaArgFlagName" | grep -q "T1" )
+if ( echo "$AlohaArgFlagName" | grep -q 'T1' )
 then
     ClassificationMeasurement=T1
 else
     ClassificationMeasurement=T2
 fi    
 
-#if [ -z "$opt_c" ]
-#then
-#	echo "${CmdName} : missing -c ClassificationMeasurement" 1>&2
-#	exit 3
-#fi
-#ClassificationMeasurement="$opt_c"
-
-if [ -z "$opt_s" ]
+if echo "$AlohaArgFlagName" | grep -q 'Baseline'
 then
-	echo "${CmdName} : missing -s Baseline|Followup" 1>&2
+	SessionType='Baseline'
+elif echo "$AlohaArgFlagName" | grep -q 'Followup'
+then
+	SessionType='Followup'
+else
+	echo "${CmdName} : missing -a Baseline|Followup ArgFlagName" 1>&2
 	exit 4
 fi
-SessionType="$opt_s"
 
 GearTags=()
 [ -n "$opt_t" ] && GearTags=( -t "$opt_t" )

@@ -1,5 +1,7 @@
+include "alohaLib";
 
-     ._id as $JobId
+      alohaFlagName2FlagArg($AlohaArgFlagName) as $AlohaArgFlag
+    | ._id as $JobId
     | .created as $JobCreated
     | 
       [
