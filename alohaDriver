@@ -256,9 +256,14 @@ then
         cat "$AlohaInputsJsonFile"
     fi
     
-    if echo "$opt_o" | grep -qi 'site'
+    if (echo "$opt_o" | grep -qi 'site')
     then
-        sys fwuploadfile -p "$SubjectId" "$AlohaInputsJsonFile"
+	if [ -s "$AlohaInputsJsonFile" ]
+	then
+            sys fwuploadfile -p "$SubjectId" "$AlohaInputsJsonFile"
+	else
+	    echo "${CmdName} : zero length $AlohaInputs file.  Not uploading" 1>&2
+	fi
     fi
 
 fi
