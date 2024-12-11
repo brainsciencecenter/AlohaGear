@@ -416,11 +416,19 @@ then
 		
 		# Run the backend if opt_f says to, or there isn't enough info from a previous alohabackend run, unless we're told to fake the backend
 
-		if     (    ( [ -z "$LastAlohaBackendJobJson" ] || [ -n "$SessionLabelDiff" ] ) &&
-			    ( [ -z "$opt_f" ] || (echo "$opt_f" | grep -v -q "FakeAlohaBackendGear")) 
-                       ) ||
-                       ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q 'RunAlohaBackendGear') )
+		if     (
+		              # LastAlohaBackendJobId is way easier to track in bash -x than Json
+		            ( [ -n "$LastAlohaBackendJobId" ] && [ -n "$SessionLabelDiff" ] ) &&
+			    (
+                                 ( [ -z "$opt_f" ] ) ||
+				 ( (echo "$opt_f" | grep -q 'FakeAlohaBackendGear')) ||
+                                 ( (echo "$opt_f" | grep -E -v -q 'IgnoreAlohaBackendJson|RunAlohaBackendGear') )
+			    )
+                       )
 		then
+		    AlohaBackendJobId="$LastAlohaBackendJobId"
+		    echo "${CmdName} : Found AlohaBackend Job Id, ${AlohaBackendJobId}, for ${FollowupSessionLabel}($FollowupSessionId)" 1>&2
+		else
 		    AlohaBackendJobId=$(sys fwRunGear -w -t "$GearTags" -g alohabackend "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}")
 		    ExitCode="$?"
 		    if [ "$ExitCode" != 0 ]
@@ -428,9 +436,6 @@ then
 			echo "${CmdName} : aloha_main.sh failed '${ExitCode}'" 1>&2
 			continue
 		    fi
-		else
-		    AlohaBackendJobId="$LastAlohaBackendJobId"
-		    echo "${CmdName} : Found AlohaBackend Job Id, ${AlohaBackendJobId}, for ${FollowupSessionLabel}($FollowupSessionId)" 1>&2
 		fi
 
 		if [ -n "$AlohaBackendJobId" ]
