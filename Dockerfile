@@ -19,6 +19,7 @@ COPY run config.test.json ${FLYWHEEL}/
 COPY 	alohaCalculateAtrophyRates		\
 	alohaDriver				\
 	alohaFindSegmentationJson		\
+	alohaPastJobs				\
 	alohaT2NiftiJson			\
 						\
 	/usr/local/bin/

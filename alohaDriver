@@ -98,6 +98,10 @@ fi
 SubjectLabel=$(jq -r '.label' "$SubjectJsonFile")
 Group=$(jq -r '.parents.group' "$SubjectJsonFile")
 
+Id2LabelsJsonFile="${TmpDir}/Id2Labels.json"
+echo -n > "$Id2LabelsJsonFile"
+jq -r '[.sessions[] | { (._id) : .label }] | add ' "$SubjectJsonFile" >> "$Id2LabelsJsonFile"xo
+
 if [ -n "$opt_m" ]
 then
     GearTags="$opt_m"
@@ -108,7 +112,10 @@ fi
 FollowupDir="${TmpDir}/Followups"
 BaselineJsonFile="${TmpDir}/Baseline.json"
 BaselineDir="${TmpDir}/Baseline"
+
+# BaselineJobsJsonFile is created by alohaFindSegementation
 BaselineJobsJsonFile="${TmpDir}/BaselineJobs.json"
+
 
 [ -d "$BaselineDir" ] || mkdir -p "$BaselineDir"
 
@@ -406,19 +413,15 @@ then
 		AlohaFollowupArgs+=( -i "$FollowupSessionT1AlohaArgFlagName" "$FollowupSessionT1FileId" )
 		AlohaFollowupArgs+=( -i "$FollowupSessionT2AlohaArgFlagName" "$FollowupSessionT2FileId" )
 
-		LastAlohaBackendJobJson=$(jq -r -s '[ .[] | select( (.gear_info.name == "alohabackend") and (.detail.state == "complete")) ] | sort_by(.created) | last | select(.)' "$BaselineJobsJsonFile")
-		if [ -n "$LastAlohaBackendJobJson" ]
-		then
-		    LastAlohaBackendJobId=$(echo "$LastAlohaBackendJobJson" | jq -r '._id')
-		    LastAlohaBackendSessionLabels=$(echo "$LastAlohaBackendJobJson" | jq -r '.inputs[].id' | fwget -1 | jq -r .parents.session | sort -u | fwget -1 | jq -r '.label')
-		    SessionLabelDiff=$(diff <(echo "$LastAlohaBackendSessionLabels" | sort) <( (echo "$BaselineSessionLabel"; echo "$FollowupSessionLabel") | sort))
-		fi
-		
-		# Run the backend if opt_f says to, or there isn't enough info from a previous alohabackend run, unless we're told to fake the backend
+		# *** there is one last aloha job, which may or may not have been for these sessions!
+		# Need to check if there is a completed aloha job which has these session ids as inputs
+		CompletedBaselineSessionJobsJsonFile="${TmpDir}/CompletedBaselineSessionJobs.json"
+		LastAlohaBackendJobId=$(sys alohaFindCompletedJobs -v -b "$BaselineSessionId"  -f "$FollowupSessionId" -c "CompletedBaselineSessionJobsJsonFile" -g 'alohabackend' -j "$BaselineJobsJsonFile")
 
+		# Run the backend if opt_f says to, or there isn't enough info from a previous alohabackend run, unless we're told to fake the backend
 		if     (
 		              # LastAlohaBackendJobId is way easier to track in bash -x than Json
-		            ( [ -n "$LastAlohaBackendJobId" ] && [ -n "$SessionLabelDiff" ] ) &&
+		            ( [ -n "$LastAlohaBackendJobId" ] ) &&
 			    (
                                  ( [ -z "$opt_f" ] ) ||
 				 ( (echo "$opt_f" | grep -q 'FakeAlohaBackendGear')) ||
@@ -429,6 +432,7 @@ then
 		    AlohaBackendJobId="$LastAlohaBackendJobId"
 		    echo "${CmdName} : Found AlohaBackend Job Id, ${AlohaBackendJobId}, for ${FollowupSessionLabel}($FollowupSessionId)" 1>&2
 		else
+exit
 		    AlohaBackendJobId=$(sys fwRunGear -w -t "$GearTags" -g alohabackend "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}")
 		    ExitCode="$?"
 		    if [ "$ExitCode" != 0 ]

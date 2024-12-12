@@ -1,0 +1,83 @@
+#!/bin/bash
+
+CmdName=$(basename "$0")
+Syntax="${CmdName} [-n][-v]{-c CompletedJobsJsonFile}{-g GearName}{-b BaselineSessionId}{-f FollowupSessionId}{-j BaselineJobsJsonFile}"
+
+while getopts b:c:f:g:j:nv arg
+do
+	case "$arg" in
+	     b|c|f|g|j|n|v)
+		eval "opt_${arg}='${OPTARG:=1}'"
+		;;
+	esac 
+done
+
+shift $(("$OPTIND" - 1))
+
+if [ -n "$opt_b" ]
+then
+	BaselineSessionId="$opt_b"
+else
+	echo "${CmdName} : Missing -b BaselineSessionId" 1>&2
+	echo "$Syntax" 1>&2
+	exit 1
+fi
+
+if [ -n "$opt_c" ]
+then
+	CompletedJobsJsonFile="$opt_c"
+else
+	echo "${CmdName} : Missing -c CompletedJobsJsonFile" 1>&2
+	echo "$Syntax" 1>&2
+	exit 1
+fi
+
+if [ -n "$opt_f" ]
+then
+	FollowupSessionId="$opt_f"
+else
+	echo "${CmdName} : Missing -f FollowupSessionId" 1>&2
+	echo "$Syntax" 1>&2
+	exit 1
+fi
+
+if [ -n "$opt_g" ]
+then
+	GearName="$opt_g"
+else
+	echo "${CmdName} : Missing -g GearName" 1>&2
+	echo "$Syntax" 1>&2
+	exit 1
+fi
+
+if [ -n "$opt_j" ]
+then
+	BaselineJobsJsonFile="$opt_j"
+else
+	echo "${CmdName} : Missing -j BaselineJobsJsonFile" 1>&2
+	echo "$Syntax" 1>&2
+	exit 1
+fi
+
+jq -r 'select( (.gear_info.name == "'"$GearName"'") and (.detail.state == "complete"))' "$BaselineJobsJsonFile" > "$CompletedJobsJsonFile"
+
+# -c to keep jq's output on one line.  sort -r so the most recent one is first
+JobInputFileIdsJson=$(jq -c -r '._id as $JobId | .created as $JobDateTime | { "JobDateTime": $JobDateTime, "JobId": $JobId, "FileId" : [ (.inputs[].id) ] }' "$CompletedJobsJsonFile" | sort -r)
+while read l
+do
+    JobId=$(echo "$l" | jq -r .JobId)
+    JobDateTime=$(echo "$l" | jq -r .JobDateTime)
+    FileIds=$(echo "$l" | jq -r .FileId[])
+
+    InputParentSessionIds=$(echo "$FileIds" | fwget -1 | jq -r .parents.session | sort -u)
+
+    if (echo "$InputParentSessionIds" | grep -q "$BaselineSessionId") && (echo "$InputParentSessionIds" | grep -q "$FollowupSessionId")
+    then
+	[ -n "$opt_v" ] && echo "{ \"JobDateTime\": ${JobDateTime}, \"JobId\": ${JobId}, \"InputSessionIds\": [ ${InputParentSessionIds} ] }" 1>&2
+	echo "$JobId"
+	exit 0
+    fi
+	
+done <<< "$JobInputFileIdsJson"
+
+echo "No $GearName matching $BaselineSessionId and $FollowupSessionId" 1>&2
