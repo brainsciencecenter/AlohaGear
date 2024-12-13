@@ -97,7 +97,7 @@ function findT1T2FileJson {
     FileJson=$(findT1T2FileJson "$AlohaArgFlagName" "$ClassificationMeasurement" "$SessionJsonFile" )
     if [ -z "$FileJson" ] || [ "$FileJson" = 'null' ]
     then
-	echo "${CmdName} : Can not find any ${ClassificationMeasurement} files in ${SessionJsonFile}" 1>&2
+	echo "${CmdName} : Can not find any ${ClassificationMeasurement} files in ${SessionJsonFile} for ${SessionLabel}" 1>&2
 	SoughtForNiftiJson='{ "Missing": true }'
 	echo "$SoughtForNiftiJson"
 	exit 0
@@ -169,3 +169,4 @@ function findT1T2FileJson {
     fi
 
     echo "$SoughtForNiftiJson"
+
