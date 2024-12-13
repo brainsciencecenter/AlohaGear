@@ -59,6 +59,12 @@ else
 	exit 1
 fi
 
+if [ ! -e "$BaselineJobsJsonFile" ]
+then
+    echo "${CmdName} : No ${BaselineJobsJsonFile}.  Bailing" 1>&2
+    exit 0
+fi
+
 jq -r 'select( (.gear_info.name == "'"$GearName"'") and (.detail.state == "complete"))' "$BaselineJobsJsonFile" > "$CompletedJobsJsonFile"
 
 # -c to keep jq's output on one line.  sort -r so the most recent one is first

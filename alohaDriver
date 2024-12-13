@@ -432,7 +432,6 @@ then
 		    AlohaBackendJobId="$LastAlohaBackendJobId"
 		    echo "${CmdName} : Found AlohaBackend Job Id, ${AlohaBackendJobId}, for ${FollowupSessionLabel}($FollowupSessionId)" 1>&2
 		else
-exit
 		    AlohaBackendJobId=$(sys fwRunGear -w -t "$GearTags" -g alohabackend "${AlohaBaselineArgs[@]}" "${AlohaFollowupArgs[@]}")
 		    ExitCode="$?"
 		    if [ "$ExitCode" != 0 ]
