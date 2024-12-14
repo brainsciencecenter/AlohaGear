@@ -1,0 +1,28 @@
+#!/bin/bash
+
+CmdName=$(basename "$0")
+Syntax="${CmdName} BaselineSessionLabel BaselineSessionId BaselineJobsJsonFile"
+
+function sys {
+    [ -n "${opt_n}${opt_v}" ] && echo "$@" 1>&2
+    [ -n "$opt_n" ] || "$@"
+}
+
+function updateJobsJsonFile {
+    local BaselineSessionLabel="$1"
+    local BaselineSessionId="$2"
+    local BaselineJobsJsonFile="$3"
+    
+    local BaselineJobsJsonTmpFile="${BaselineJobsJsonFile}.tmp"
+    
+    sys fwfind -1 -j -r session="$BaselineSessionId" > "$BaselineJobsJsonTmpFile"
+    if [ "$?" != 0 ]
+    then
+    	echo "${CmdName} : failed getting finding jobs for '$SessionLabel' ($SessionId)" 1>&2
+    	return 1
+    fi
+
+    [ -s "$BaselineJobsJsonTmpFile" ] && mv "$BaselineJobsJsonTmpFile" "$BaselineJobsJsonFile"
+}
+
+updateJobsJsonFile "$@"

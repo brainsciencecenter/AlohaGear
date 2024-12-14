@@ -3,6 +3,11 @@
 CmdName=$(basename "$0")
 Syntax="${CmdName} [-n][-v]{-c CompletedJobsJsonFile}{-g GearName}{-b BaselineSessionId}{-f FollowupSessionId}{-j BaselineJobsJsonFile}"
 
+function sys {
+    [ -n "${opt_n}${opt_v}" ] && echo "$@" 1>&2
+    [ -n "$opt_n" ] || "$@"
+}
+
 while getopts b:c:f:g:j:nv arg
 do
 	case "$arg" in
@@ -61,8 +66,13 @@ fi
 
 if [ ! -e "$BaselineJobsJsonFile" ]
 then
-    echo "${CmdName} : No ${BaselineJobsJsonFile}.  Bailing" 1>&2
-    exit 0
+    BaselineSessionLabel=$(fwget -1 "$BaselineSessionId" | jq -r '.label')
+    sys alohaUpdateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
+    if [ "$?" != 0 ]
+    then
+	echo "${CmdName} : Could not update BaselineJobsJsonFile" 1>&2
+	exit 2
+    fi
 fi
 
 jq -r 'select( (.gear_info.name == "'"$GearName"'") and (.detail.state == "complete"))' "$BaselineJobsJsonFile" > "$CompletedJobsJsonFile"

@@ -9,23 +9,6 @@ function sys {
     [ -n "$opt_n" ] || "$@"
 }
 
-function updateJobsJsonFile {
-    local BaselineSessionLabel="$1"
-    local BaselineSessionId="$2"
-    local BaselineJobsJsonFile="$3"
-    
-    local BaselineJobsJsonTmpFile="${BaselineJobsJsonFile}.tmp"
-    
-    sys fwfind -1 -j -r session="$BaselineSessionId" > "$BaselineJobsJsonTmpFile"
-    if [ "$?" != 0 ]
-    then
-    	echo "${CmdName} : failed getting finding jobs for '$SessionLabel' ($SessionId)" 1>&2
-    	return 1
-    fi
-
-    [ -s "$BaselineJobsJsonTmpFile" ] && mv "$BaselineJobsJsonTmpFile" "$BaselineJobsJsonFile"
-}
-
 function getSegmentationJson {
     local ClassificationMeasurement="$1"
     local HandedNess="$2"
@@ -122,7 +105,7 @@ GearTags=()
     if [ ! -e "$BaselineJobsJsonFile" ] || [ ! -s "$BaselineJobsJsonFile" ] || ( [ -n "$opt_f" ] && (echo "$opt_f" | grep -q 'IgnoreBaselineJobsJsonFile'))
     then
 	# Need -r to get the output file id
-	sys updateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
+	sys alohaUpdateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
 	if [ "$?" != 0 ]
         then
 	    echo "${CmdName} : updating JobsJsonFile failed.  Bailing" 1>&2
@@ -153,7 +136,7 @@ GearTags=()
     		exit 1
     	    fi
 
-	    sys updateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
+	    sys alohaUpdateJobsJsonFile "$BaselineSessionLabel" "$BaselineSessionId" "$BaselineJobsJsonFile"
     	    if [ "$?" != 0 ]
     	    then
     		echo "${CmdName} : fwfind failed updating jobs for '$BaselineSessionLabel' ($BaselineSessionId)" 1>&2
