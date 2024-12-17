@@ -130,6 +130,9 @@ then
     exit 2
 fi
 BaselineSessionLabel=$(echo "$BaselineJson" | jq -r '.SessionLabel')
+BaselineSessionId=$(echo "$BaselineJson" | jq -r '.SessionId')
+BaselineSessionJsonFile="${TmpDir}/BaselineSession.json"
+jq -r '..|select(._id == "'"$BaselineSessionId"'")?' "$SubjectJsonFile" > "$BaselineSessionJsonFile"
 
 if [ -n "$opt_o" ]
 then
@@ -142,9 +145,6 @@ then
     	exit 3
     fi
     
-    BaselineSessionId=$(echo "$BaselineJson" | jq -r '.SessionId')
-    BaselineSessionJsonFile="${TmpDir}/BaselineSession.json"
-    jq -r '..|select(._id == "'"$BaselineSessionId"'")?' "$SubjectJsonFile" > "$BaselineSessionJsonFile"
     
     BaselineT1NiftiTrimmedJson=$(alohaT2NiftiJson -v -a BaselineT1NiftiTrimmed "$BaselineSessionJsonFile")
     if [ -z "$BaselineT1NiftiTrimmedJson" ] || [ "$BaselineT1NiftiTrimmedJson" = "null" ]
@@ -166,7 +166,19 @@ then
     [ -n "$opt_f" ] && alohaFindSegmentationArgs+=( -f "$opt_f")
 
     BaselineT1Json=$(alohaFindSegmentationJson -v -c 'T1' -1 "$BaselineT1NiftiTrimmedFileId" -2 "$BaselineT2NiftiFileId" -t "$GearTags" "${alohaFindSegmentationArgs[@]}" "$BaselineSessionJsonFile")
+    if [ -z "$BaselineT1Json" ]
+    then
+	echo "${CmdName} : Baseline T1 Segmentation failed. Exiting" 1>&2
+	exit 4
+    fi
+    
     BaselineT2Json=$(alohaFindSegmentationJson -v -c 'T2' -1 "$BaselineT1NiftiTrimmedFileId" -2 "$BaselineT2NiftiFileId" -t "$GearTags" "${alohaFindSegmentationArgs[@]}" "$BaselineSessionJsonFile")
+    if [ -z "$BaselineT2Json" ]
+    then
+	echo "${CmdName} : Baseline T2 Segmentation failed. Exiting" 1>&2
+	exit 4
+    fi
+    
 
     BaselineT1LeftSegmentationJson=$(echo "$BaselineT1Json" | jq -r '.T1LeftSegmentation')
     BaselineT1RightSegmentationJson=$(echo "$BaselineT1Json" | jq -r '.T1RightSegmentation')
@@ -322,6 +334,7 @@ fi
 if [ -n "$opt_r" ]
 then
 	AlohaBaselineArgs=()
+	AlohaCliBaselineArgs=()
 
 	BaselineSessionScanDateTime=$(jq -r '.Baseline.SessionScanDateTime' "$AlohaInputsJsonFile")
 	BaselineSessionScanDate=$(date -d "$BaselineSessionScanDateTime" "+%Y-%m-%d")
@@ -337,9 +350,11 @@ then
 		FileId=$(jq -r '.Baseline.'"$k"' | .FileId' "$AlohaInputsJsonFile")
 		InputFilePath="${BaselineDir}/${FileName}"
 		AlohaBaselineArgs+=( '-i' "$AlohaArgFlagName" "$FileId" )
+		AlohaCliBaselineArgs+=( "$AlohaArgFlag" "$InputFilePath" )
 	done
 
 	AlohaFollowupArgs=()
+	AlohaCliFollowupArgs=()
 	for FollowupSessionId in $(jq -r '.Followups[].SessionId' "$AlohaInputsJsonFile")
 	do
 	    RunAloha=true
@@ -413,6 +428,9 @@ then
 		AlohaFollowupArgs+=( -i "$FollowupSessionT1AlohaArgFlagName" "$FollowupSessionT1FileId" )
 		AlohaFollowupArgs+=( -i "$FollowupSessionT2AlohaArgFlagName" "$FollowupSessionT2FileId" )
 
+		AlohaCliFollowupArgs+=( "$FollowupSessionT1AlohaArgFlag" "$FollowupSessionT1FilePath" )
+		AlohaCliFollowupArgs+=( "$FollowupSessionT2AlohaArgFlag" "$FollowupSessionT2FilePath" )
+
 		# *** there is one last aloha job, which may or may not have been for these sessions!
 		# Need to check if there is a completed aloha job which has these session ids as inputs
 		CompletedBaselineSessionJobsJsonFile="${TmpDir}/CompletedBaselineSessionJobs.json"
@@ -429,6 +447,8 @@ then
 			    )
                        )
 		then
+		    echo "aloha_main.sh" "${AlohaCliBaselineArgs[@]}" "${AlohaCliFollowupArgs[@]}" 
+
 		    AlohaBackendJobId="$LastAlohaBackendJobId"
 		    echo "${CmdName} : Found AlohaBackend Job Id, ${AlohaBackendJobId}, for ${FollowupSessionLabel}($FollowupSessionId)" 1>&2
 		else

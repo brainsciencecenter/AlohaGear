@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
 CmdName=$(basename "$0")
-Syntax="${CmdName} [-c config][-i ProjectId|SubjectId][-n][-m extra-large|supersize][-t][-v][(VerifyAlohaInputs|CompileReport|RunAloha|CalculateAtrophy)]" 
+Syntax="${CmdName} [-c config][-i ProjectId|SubjectId][-n][-m extra-large|supersize][-t][-v][(VerifyAlohaInputs|AlohaT1T2TaggingReport|RunAloha|CalculateAtrophy)]" 
 
 function sys {
 	[ -n "${opt_n}${opt_v}" ] && echo "$@" 1>&2
@@ -32,6 +32,7 @@ jq -r . "$ConfigJsonFile"
 JobId=$(jq -r '.job.id | select(.)' "$ConfigJsonFile")
 
 InputDir=/flywheel/v0/input
+OutputDir=/flywheel/v0/output
 TmpDir=/tmp/aloha
 
 [ -d "$TmpDir" ] || mkdir -p "$TmpDir"
@@ -73,9 +74,11 @@ fi
 [ -n "$opt_v" ] && echo "SubjectIds = '${SubjectIds[@]}'" 1>&2
 
 #
-# *** should set the default stages and each stage should add its bit to the aloha args.  don't set both
 Stages=( 'VerifyAlohaInputs' )
-if [ -z "$1" ] && [ -s "$ConfigJsonFile" ]
+if [ -n "$1" ]
+then
+    Stages=( "$@" )
+elif [ -s "$ConfigJsonFile" ]
 then
     ConfigStages=$(jq -r '.config.Stages | select(.)' "$ConfigJsonFile")
     if [ -n "$ConfigStages" ] && (echo "$ConfigStages" | grep -v -q default)
@@ -94,7 +97,12 @@ do
 		AlohaDriverArgs+=( '-u' '-o' 'stdout,site' )
 		;;
 	    
-	    CompileReport)
+	    AlohaT1T2TaggingReport)
+		ProjectJsonFile="${TmpDir}/Project.json"
+		ReportOutputFile="${OutputDir}/AlohaT1T2TaggingReport.csv"
+		fwget -1 -raGz "$ProjectId" > "$ProjectJsonFile"
+		alohaReport < /tmp/Project.json | tee "$ReportOutputFile"
+		exit 0
 		;;
 	    
 	    RunAloha)

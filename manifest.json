@@ -1,18 +1,8 @@
 {
   "author": "Gaylord Holder <holder@upenn.edu>",
-  "cite": "",
+  "cite": "Neuroimage 2012 Apr 2;60(2):1266-79.  doi: 10.1016/j.neuroimage.2012.01.098. Epub 2012 Jan 28.\n\nMeasuring longitudinal change in the hippocampal formation from in vivo high-resolution T2-weighted MRI\n\nSandhitsu R Das, Brian B Avants, John Pluta, Hongzhi Wang, Jung W Suh, Michael W Weiner, Susanne G Mueller, Paul A Yushkevich\n\nAffiliation: Penn Image Computing and Science Laboratory-PICSL, Department of Radiology, University of Pennsylvania, Philadelphia, PA, USA. sudas@seas.upenn.edu\n\nPMID: 22306801 PMCID: PMC3667607 DOI: 10.1016/j.neuroimage.2012.01.098",
   "command": "./run -v",
   "config": {
-    "MachineSize": {
-      "default": "None",
-      "description": "May be extra-large, 8 vCPUs, or supersize, 32 vCPUs",
-      "enum": [
-        "None",
-        "extra-large",
-        "supersize"
-      ],
-      "type": "string"
-    },
     "Scope": {
       "default": "Subject",
       "description": "Run Aloha on the specified subject, or the whole project",
@@ -23,21 +13,31 @@
       "type": "string"
     },
     "Stages": {
-      "default": "default",
+      "default": "VerifyAlohaInputs",
       "description": "Which stages of the pipeline to run, default is VerifyAlohaInputs",
       "enum": [
-        "default",
+        "AlohaT1T2TaggingReport",
         "VerifyAlohaInputs",
         "RunAloha",
         "CalculateAtrophyRates",
         "VerifyAlohaInputs,RunAloha"
       ],
       "type": "string"
+    },
+    "MachineSize": {
+      "default": "extra-large",
+      "description": "May be extra-large, 8 vCPUs, or supersize, 32 vCPUs",
+      "enum": [
+        "none",
+        "extra-large",
+        "supersize"
+      ],
+      "type": "string"
     }
   },
   "description": "Aloha Gear",
   "environment": {
-    "PATH": "/flywheel/v0/flywheel/bin:/tk/greedy/build:/tk/cmrep/build:/tk/c3d/build:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/flywheel/v0/aloha/scripts:/flywheel/v0/aloha/aloha/ext/Linux/bin",
+    "PATH": "/flywheel/v0/flywheel/bin:/tk/greedy/build:/tk/cmrep/build:/tk/c3d/build:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/scripts:/aloha/ext/Linux/bin",
     "LD_LIBRARY_PATH": "/tk/vtk/build/lib",
     "FLYWHEEL": "/flywheel/v0",
     "ALOHA_ROOT": "/flywheel/v0/aloha",
@@ -46,7 +46,7 @@
   },
   "custom": {
     "gear-builder": {
-      "image": "aloha:0.1.26",
+      "image": "aloha:0.1.30",
       "category": "analysis"
     },
     "flywheel": {
@@ -70,5 +70,5 @@
   "source": "",
   "url": "",
   "license": "MIT",
-  "version": "0.1.26"
+  "version": "0.1.30"
 }

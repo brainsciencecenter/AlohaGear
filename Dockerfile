@@ -3,8 +3,6 @@ FROM pyushkevich/tk:2023a  as base
 ENV FLYWHEEL=/flywheel/v0
 WORKDIR ${FLYWHEEL}
 
-COPY aloha/ ${FLYWHEEL}/aloha/
-ENV ALOHA_ROOT=${FLYWHEEL}/aloha
 ENV PATH=${FLYWHEEL}/flywheel/bin:/tk/greedy/build:/tk/cmrep/build:/tk/c3d/build:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${ALOHA_ROOT}/scripts:${ALOHA_ROOT}/aloha/ext/Linux/bin
 ENV PYTHONPATH=${FLYWHEEL}/flywheel/lib
 
@@ -21,6 +19,7 @@ COPY 	alohaCalculateAtrophyRates		\
 	alohaFindSegmentationJson		\
 	alohaFindCompletedJobs			\
 	alohaT2NiftiJson			\
+	alohaUpdateJobsJsonFile			\
 						\
 	/usr/local/bin/
 

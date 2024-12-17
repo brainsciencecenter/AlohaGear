@@ -1,0 +1,25 @@
+#!/bin/bash
+
+SubjectJsonFile=/tmp/Aloha/Subject.json
+
+AlohaReportJq='
+   ._id as $ProjectId
+ | .subjects[]
+     | ._id as $SubjectId
+     | .label as $SubjectLabel
+     | .sessions[]
+        | ._id as $SessionId
+        | .label as $SessionLabel
+        | .acquisitions[]
+           | ._id as $AcquisitionId
+           | .label as $AcquisitionLabel
+              | .files[]
+    	     | select((.tags | any(. == "AlohaInput" )) and (.type == "nifti"))
+    	        | { 
+                            "FwPath": ([ $SubjectLabel, $SessionLabel, $AcquisitionLabel, .name ] | join("/") )
+    		      , "FileId": .file_id
+    		      , "Tags": (.tags | join(":"))
+                      } | [.FwPath, .FileId, .Tags] | @csv
+'
+jq -r -f <( echo "$AlohaReportJq") 
+
