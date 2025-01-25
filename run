@@ -65,6 +65,7 @@ else
     if [ "$Scope" = 'Subject' ]
     then
 	SubjectIds=( $(jq -r '.job.id' "$ConfigJsonFile" | fwget -1 -j | jq -r '.parents.subject') )
+	ProjectId=$(jq -r '.job.id' "$ConfigJsonFile" | fwget -1 -j | jq -r '.parents.project')
     else
 	ProjectId=$(jq -r '.job.id' "$ConfigJsonFile" | fwget -1 -j | jq -r '.parents.project')
 	SubjectIds=( $(sys fwget -1 -r "$ProjectId" | jq -r '.subjects[]._id') )
@@ -101,7 +102,7 @@ do
 		ProjectJsonFile="${TmpDir}/Project.json"
 		ReportOutputFile="${OutputDir}/AlohaT1T2TaggingReport.csv"
 		fwget -1 -raGz "$ProjectId" > "$ProjectJsonFile"
-		alohaReport < /tmp/Project.json | tee "$ReportOutputFile"
+		alohaReport < "$ProjectJsonFile" | tee "$ReportOutputFile"
 		exit 0
 		;;
 	    

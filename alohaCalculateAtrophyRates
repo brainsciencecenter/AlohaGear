@@ -53,17 +53,18 @@ def obtain_atrophy_per_subject(csv_left, csv_right):
         
         # Calculate sums for the formula
         time_diffs_squared = np.sum(((scan_dates - t0).days/365) ** 2)
-        volume_diffs_squared = np.sum((volumes - v0) * ((scan_dates - t0).days/365))
-        
+        volume_diffs_squared = np.sum( ((volumes - v0)/v0) * ((scan_dates - t0).days/365))
+        # print("volume_diffs_squared: ",volume_diffs_squared)
         # Handle division by zero
         if time_diffs_squared == 0:
             A = np.nan  # Assign NaN if there's no progression
         else:
-            A = volume_diffs_squared /time_diffs_squared
+            A = (volume_diffs_squared /time_diffs_squared) * 100
+        # print("A: ", A)
         progression_rates.append(A)
 
     # Add progression rates to the DataFrame
-    result_df['Progression_Rate'] = progression_rates
+    result_df['Annualized percent atrophy rate'] = progression_rates
 
     if (args.table):
         print(result_df)

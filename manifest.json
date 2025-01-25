@@ -46,7 +46,7 @@
   },
   "custom": {
     "gear-builder": {
-      "image": "aloha:0.1.30",
+      "image": "aloha:0.1.34",
       "category": "analysis"
     },
     "flywheel": {
@@ -70,5 +70,5 @@
   "source": "",
   "url": "",
   "license": "MIT",
-  "version": "0.1.30"
+  "version": "0.1.34"
 }
