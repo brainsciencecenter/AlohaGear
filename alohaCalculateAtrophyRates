@@ -11,6 +11,48 @@ import sys
 
 from io import StringIO
 
+def leastSquares(scan_dates,volumes):
+    t0 = scan_dates[0]
+    v0 = volumes[t0]
+        
+    # Calculate sums for the formula
+    time_diffs_squared = np.sum(((scan_dates - t0).days/365) ** 2)
+    volume_diffs_squared = np.sum( ((volumes - v0)/v0) * ((scan_dates - t0).days/365))
+    # print("volume_diffs_squared: ",volume_diffs_squared)
+    # Handle division by zero
+    if time_diffs_squared == 0:
+        A = np.nan  # Assign NaN if there's no progression
+    else:
+        A = (volume_diffs_squared /time_diffs_squared) * 100
+    # print("A: ", A)
+    return(A)
+
+# See https://stackoverflow.com/questions/38406324/ordinary-least-squares-regression-for-multiple-columns-in-pandas-dataframe
+def leastSquares2(scan_dates,volumes):
+    t0 = scan_dates[0]
+    v0 = volumes[t0]
+        
+    print("scan_dates: ", scan_dates)
+    print("volumes: ", np.array(volumes))
+    v=np.array(volumes)
+    
+    # Calculate sums for the formula
+    time_diffs_squared = np.sum(((scan_dates - t0).days/365) ** 2)
+    print("years: ", (scan_dates - t0).days/365)
+    v=(volumes - v0)
+    print("v: ", v)
+    #volume_diffs_squared = np.sum( ((volumes - v0)/v0) * ((scan_dates - t0).days/365))
+    volume_diffs_squared = np.sum( ((v - v0)/v0) * ((scan_dates - t0).days/365))
+    # print("volume_diffs_squared: ",volume_diffs_squared)
+    # Handle division by zero
+    if time_diffs_squared == 0:
+        A = np.nan  # Assign NaN if there's no progression
+    else:
+        A = (volume_diffs_squared /time_diffs_squared) * 100
+    # print("A: ", A)
+    return(A)
+
+
 def obtain_atrophy_per_subject(csv_left, csv_right):
 
     if len(csv_left) == 0 and len(csv_right) == 0:
@@ -39,28 +81,20 @@ def obtain_atrophy_per_subject(csv_left, csv_right):
     merged_df = pd.concat([df_left.set_index('SessionScanDate'), df_right.set_index('SessionScanDate')], axis=1)
     result_df = merged_df.groupby(merged_df.columns, axis=1).mean().reset_index()
 
+    print("result_df: ", result_df)
+
     # use pandas to calculate overall atrophy rate for each substructure.
     # Extract scan dates and convert to datetime
     scan_dates = pd.to_datetime(result_df.columns[1:])
-    result_df.columns = ['Structure'] + list(scan_dates)
+    result_df.columns = ['SessionScanDate'] + list(scan_dates)
 
     # Compute progression rate for each brain region
     progression_rates = []
     for index, row in result_df.iterrows():
         volumes = row[1:]  # Exclude the Structure column
-        t0 = scan_dates[0]
-        v0 = volumes[t0]
+
+        A = leastSquares(scan_dates,volumes)
         
-        # Calculate sums for the formula
-        time_diffs_squared = np.sum(((scan_dates - t0).days/365) ** 2)
-        volume_diffs_squared = np.sum( ((volumes - v0)/v0) * ((scan_dates - t0).days/365))
-        # print("volume_diffs_squared: ",volume_diffs_squared)
-        # Handle division by zero
-        if time_diffs_squared == 0:
-            A = np.nan  # Assign NaN if there's no progression
-        else:
-            A = (volume_diffs_squared /time_diffs_squared) * 100
-        # print("A: ", A)
         progression_rates.append(A)
 
     # Add progression rates to the DataFrame
