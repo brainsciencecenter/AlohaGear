@@ -1,0 +1,16 @@
+name: AlohaEnv
+channels:
+ - defaults
+dependencies:
+ - python=3.9
+ - pip
+ - pip:
+    - flywheel-gear-toolkit
+    - flywheel-sdk
+    - globre
+    - numpy
+    - pandas
+    - pytz
+    - requests
+    - tzlocal
+#    - pyjq

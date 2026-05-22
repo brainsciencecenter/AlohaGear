@@ -86,7 +86,7 @@ AlohaWorkDir="${TmpDir}/Work"
 SubjectId="$1"
 SubjectJsonFile="${TmpDir}/Subject.json"
 
-if [ ! \( \( -e "$SubjectJsonFile" \) -a \( -s "$SubjectJsonFile" \) \) ] || [ -n "$UpdateAll" ] 
+if [ ! \( -e "$SubjectJsonFile" \) -a \( -s "$SubjectJsonFile" \) ] || [ -n "$UpdateAll" ] 
 then
 	sys fwget -1 -raGz "$SubjectId" > "$SubjectJsonFile"
 	if [ "$?" != 0 ]
@@ -501,7 +501,21 @@ fi
 if [ -n "$opt_A" ]
 then
     LeftVolumeFileIds=( $( sys fwget -1 -r "$SubjectId" | jq -r '.files[] | select( (.tags | any("HippocamplVolume")) and (.tags | any(. == "Left")) ) | .file_id' ) )
+    if [ "${#LeftVolumeFileIds[@]}" -le 0 ]
+    then
+	    echo "${CmdName} : no LeftVolumeFileIds found for subject '${SubjectId}'" 1>&2
+	    exit 1
+    fi
+
+    echo "LeftVolumeFileIds '${LeftVolumeFileIds[@]}'" 1>&2
     RightVolumeFileIds=( $( sys fwget -1 -r "$SubjectId" | jq -r '.files[] | select( (.tags | any("HippocamplVolume")) and (.tags | any(. == "Right")) ) | .file_id' ) )
+    if [ "${#RightVolumeFileIds[@]}" -le 0 ]
+    then
+            echo "${CmdName} : no RightVolumeFileIds found for subject '${SubjectId}'" 1>&2
+            exit 1
+    fi
+
+    echo "RightVolumeFileIds '${RightVolumeFileIds[@]}'" 1>&2
 
     LeftVolumeFilenames=( $( sys fwget -1 -f --download --download-dir "${TmpDir}" "${LeftVolumeFileIds[@]}" | sed "s/^.*=> //; s/ / -l /g; s/^/-l /") )
     RightVolumeFilenames=( $( sys fwget -1 -f --download --download-dir "${TmpDir}" "${RightVolumeFileIds[@]}" | sed "s/^.*=> //; s/ / -r /g; s/^/-r /" ) )

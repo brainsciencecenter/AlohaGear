@@ -24,6 +24,11 @@
       ],
       "type": "string"
     },
+    "AdditionalRunArgs": {
+      "description": "Additional Args for the gear run command",
+      "type": "string",
+      "default": ""
+    },
     "MachineSize": {
       "default": "extra-large",
       "description": "May be extra-large, 8 vCPUs, or supersize, 32 vCPUs",
@@ -37,7 +42,7 @@
   },
   "description": "Aloha Gear",
   "environment": {
-    "PATH": "/flywheel/v0/flywheel/bin:/tk/greedy/build:/tk/cmrep/build:/tk/c3d/build:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/scripts:/aloha/ext/Linux/bin",
+    "PATH": "/flywheel/v0/flywheel/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
     "LD_LIBRARY_PATH": "/tk/vtk/build/lib",
     "FLYWHEEL": "/flywheel/v0",
     "ALOHA_ROOT": "/flywheel/v0/aloha",
@@ -46,7 +51,7 @@
   },
   "custom": {
     "gear-builder": {
-      "image": "aloha:0.1.34",
+      "image": "aloha:0.1.35",
       "category": "analysis"
     },
     "flywheel": {
@@ -70,5 +75,5 @@
   "source": "",
   "url": "",
   "license": "MIT",
-  "version": "0.1.34"
+  "version": "0.1.35"
 }

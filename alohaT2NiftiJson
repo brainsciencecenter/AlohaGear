@@ -130,9 +130,9 @@ function findT1T2FileJson {
     		    exit 5
     		fi
 		
-		NiftiFileId=$(fwget -1 -j "$Dicom2NiftiJobId" | jq -r '.outputs[] | select(.type == "nifti") | .file_id')
+		NiftiFileId=$(sys fwget -1 -j "$Dicom2NiftiJobId" | jq -r '.outputs[] | select(.type == "nifti") | .file_id')
 
-		DicomTags=$(fwTag "$DicomFileId")
+		DicomTags=$(fwTag "$DicomFileId" | awk '{print $NF}')
 
 		[ -n "$DicomTags" ] && sys fwTag -q -t "$DicomTags" "$NiftiFileId"
 		sys fwget -1 -raGz "$SessionId" > "$SessionJsonFile"
@@ -154,7 +154,7 @@ function findT1T2FileJson {
 
                     T1NiftiTrimmedFileId=$(fwget -1 -j "$NecktrimJobId" | jq -r '.outputs[] | select(.type == "nifti") | .file_id')
 
-                    T1NiftiTags=$(fwTag "$T1NiftiTrimmedFileId")
+                    T1NiftiTags=$(fwTag "$T1NiftiTrimmedFileId" | awk '{print $NF'})
                     [ -n "$T1NiftiTags" ] && sys fwTag -q -t "$T1NiftiTags" "$T1NiftiTrimmedFileId"
 		
                     sys fwget -1 -raGz "$SessionId" > "$SessionJsonFile"
