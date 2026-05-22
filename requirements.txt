@@ -1,8 +1,9 @@
 flywheel-gear-toolkit
 flywheel-sdk
+globre
 numpy
 pandas
 pytz
 pyjq
-globre
+requests
 tzlocal
